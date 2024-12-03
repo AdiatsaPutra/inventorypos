@@ -74,13 +74,13 @@ class _TransactionPageState extends State<TransactionPage> {
     return Scaffold(
       body: Column(
         children: [
-          // Search Bar
+          // Pencarian
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Search by Transaction ID or Product Name',
+                labelText: 'Cari Berdasarkan ID Transaksi atau Nama Produk',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -89,7 +89,7 @@ class _TransactionPageState extends State<TransactionPage> {
               onChanged: _searchTransactions,
             ),
           ),
-          // Transaction List
+          // Daftar Transaksi
           Expanded(
             child: ListView.builder(
               itemCount: _filteredTransactions.length,
@@ -108,7 +108,7 @@ class _TransactionPageState extends State<TransactionPage> {
                     ),
                     title: Text(transaction['product']),
                     subtitle: Text(
-                      'ID: ${transaction['id']}\nPrice: \$${transaction['price']}\nQuantity: ${transaction['quantity']}\nTotal: \$${transaction['total']}',
+                      'ID: ${transaction['id']}\nHarga: \$${transaction['price']}\nKuantitas: ${transaction['quantity']}\nTotal: \$${transaction['total']}',
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -124,7 +124,7 @@ class _TransactionPageState extends State<TransactionPage> {
               },
             ),
           ),
-          // Add Transaction Button
+          // Tombol Tambah Transaksi
         ],
       ),
     );

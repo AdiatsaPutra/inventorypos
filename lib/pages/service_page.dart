@@ -18,20 +18,28 @@ class _ServicePageState extends State<ServicePage> {
     _filteredServices = _services;
   }
 
-  void _addService(String name, String complaint) {
+  void _addService(String name, String phone, String deviceName,
+      String deviceDetail, String complaint) {
     setState(() {
       _services.add({
         'name': name,
+        'phone': phone,
+        'deviceName': deviceName,
+        'deviceDetail': deviceDetail,
         'complaint': complaint,
       });
       _filteredServices = _services;
     });
   }
 
-  void _editService(int index, String name, String complaint) {
+  void _editService(int index, String name, String phone, String deviceName,
+      String deviceDetail, String complaint) {
     setState(() {
       _services[index] = {
         'name': name,
+        'phone': phone,
+        'deviceName': deviceName,
+        'deviceDetail': deviceDetail,
         'complaint': complaint,
       };
       _filteredServices = _services;
@@ -52,6 +60,13 @@ class _ServicePageState extends State<ServicePage> {
       } else {
         _filteredServices = _services.where((service) {
           return service['name']!.toLowerCase().contains(query.toLowerCase()) ||
+              service['phone']!.toLowerCase().contains(query.toLowerCase()) ||
+              service['deviceName']!
+                  .toLowerCase()
+                  .contains(query.toLowerCase()) ||
+              service['deviceDetail']!
+                  .toLowerCase()
+                  .contains(query.toLowerCase()) ||
               service['complaint']!.toLowerCase().contains(query.toLowerCase());
         }).toList();
       }
@@ -69,7 +84,8 @@ class _ServicePageState extends State<ServicePage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Search by Name or Complaint',
+                labelText:
+                    'Cari berdasarkan Nama, Telepon, Perangkat, atau Keluhan',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -96,7 +112,8 @@ class _ServicePageState extends State<ServicePage> {
                       ),
                     ),
                     title: Text(service['name']!),
-                    subtitle: Text('Complaint: ${service['complaint']}'),
+                    subtitle: Text(
+                        'Telepon: ${service['phone']}\nPerangkat: ${service['deviceName']} (${service['deviceDetail']})\nKeluhan: ${service['complaint']}'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -121,7 +138,7 @@ class _ServicePageState extends State<ServicePage> {
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
               onPressed: () => _showServiceForm(context),
-              child: const Text('Add Service'),
+              child: const Text('Tambah Layanan'),
             ),
           ),
         ],
@@ -133,6 +150,12 @@ class _ServicePageState extends State<ServicePage> {
       [int? index, Map<String, String>? service]) {
     final TextEditingController nameController =
         TextEditingController(text: service?['name'] ?? '');
+    final TextEditingController phoneController =
+        TextEditingController(text: service?['phone'] ?? '');
+    final TextEditingController deviceNameController =
+        TextEditingController(text: service?['deviceName'] ?? '');
+    final TextEditingController deviceDetailController =
+        TextEditingController(text: service?['deviceDetail'] ?? '');
     final TextEditingController complaintController =
         TextEditingController(text: service?['complaint'] ?? '');
 
@@ -140,17 +163,32 @@ class _ServicePageState extends State<ServicePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(index == null ? 'Add Service' : 'Edit Service'),
+          title: Text(index == null ? 'Tambah Layanan' : 'Edit Layanan'),
           content: SingleChildScrollView(
             child: Column(
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: const InputDecoration(labelText: 'Nama'),
+                ),
+                TextField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(labelText: 'Telepon'),
+                  keyboardType: TextInputType.phone,
+                ),
+                TextField(
+                  controller: deviceNameController,
+                  decoration:
+                      const InputDecoration(labelText: 'Nama Perangkat'),
+                ),
+                TextField(
+                  controller: deviceDetailController,
+                  decoration:
+                      const InputDecoration(labelText: 'Detail Perangkat'),
                 ),
                 TextField(
                   controller: complaintController,
-                  decoration: const InputDecoration(labelText: 'Complaint'),
+                  decoration: const InputDecoration(labelText: 'Keluhan'),
                 ),
               ],
             ),
@@ -158,22 +196,26 @@ class _ServicePageState extends State<ServicePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () {
                 final String name = nameController.text.trim();
+                final String phone = phoneController.text.trim();
+                final String deviceName = deviceNameController.text.trim();
+                final String deviceDetail = deviceDetailController.text.trim();
                 final String complaint = complaintController.text.trim();
 
                 if (index == null) {
-                  _addService(name, complaint);
+                  _addService(name, phone, deviceName, deviceDetail, complaint);
                 } else {
-                  _editService(index, name, complaint);
+                  _editService(
+                      index, name, phone, deviceName, deviceDetail, complaint);
                 }
 
                 Navigator.pop(context);
               },
-              child: const Text('Save'),
+              child: const Text('Simpan'),
             ),
           ],
         );

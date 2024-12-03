@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventorypos/pages/inventory_page.dart';
+import 'package:inventorypos/pages/login_page.dart';
 import 'package:inventorypos/pages/pos_overview_page.dart';
 import 'package:inventorypos/pages/pos_page.dart';
 import 'package:inventorypos/pages/service_page.dart';
@@ -25,10 +26,10 @@ class _POSHomePageState extends State<POSHomePage> {
   ];
 
   final List<String> _titles = [
-    'Point of Sale Overview',
-    'Inventory',
-    'Transaction',
-    'Service',
+    'Beranda',
+    'Inventaris',
+    'Transaksi',
+    'Layanan',
     'Point of Sale', // New title added here
   ];
 
@@ -68,9 +69,12 @@ class _POSHomePageState extends State<POSHomePage> {
                   ),
                 ), // Dynamic title
                 centerTitle: true,
-                backgroundColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: Theme.of(context).primaryColor,
                 leading: IconButton(
-                  icon: Icon(_isDrawerOpen ? Icons.close : Icons.menu),
+                  icon: Icon(
+                    _isDrawerOpen ? Icons.close : Icons.menu,
+                    color: Colors.white,
+                  ),
                   onPressed: _toggleDrawer,
                 ),
               ),
@@ -96,16 +100,16 @@ class _POSHomePageState extends State<POSHomePage> {
   Widget _buildCustomDrawer() {
     return Container(
       width: 250,
-      color: Theme.of(context).colorScheme.primary,
+      color: Theme.of(context).primaryColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             height: 150,
-            color: Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).primaryColor,
             child: Center(
               child: Text(
-                'POS Menu',
+                'Menu POS',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -116,24 +120,24 @@ class _POSHomePageState extends State<POSHomePage> {
           ),
           ListTile(
             leading: const Icon(Icons.home, color: Colors.white),
-            title: const Text('Home', style: TextStyle(color: Colors.white)),
+            title: const Text('Beranda', style: TextStyle(color: Colors.white)),
             onTap: () => _onTabSelected(0),
           ),
           ListTile(
             leading: const Icon(Icons.inventory, color: Colors.white),
             title:
-                const Text('Inventory', style: TextStyle(color: Colors.white)),
+                const Text('Inventaris', style: TextStyle(color: Colors.white)),
             onTap: () => _onTabSelected(1),
           ),
           ListTile(
             leading: const Icon(Icons.receipt, color: Colors.white),
-            title: const Text('Transaction',
-                style: TextStyle(color: Colors.white)),
+            title:
+                const Text('Transaksi', style: TextStyle(color: Colors.white)),
             onTap: () => _onTabSelected(2),
           ),
           ListTile(
             leading: const Icon(Icons.settings, color: Colors.white),
-            title: const Text('Service', style: TextStyle(color: Colors.white)),
+            title: const Text('Layanan', style: TextStyle(color: Colors.white)),
             onTap: () => _onTabSelected(3),
           ),
           ListTile(
@@ -143,6 +147,21 @@ class _POSHomePageState extends State<POSHomePage> {
                 style: TextStyle(color: Colors.white)),
             onTap: () => _onTabSelected(4), // Navigate to POS tab
           ),
+          ListTile(
+              leading:
+                  const Icon(Icons.logout, color: Colors.white), // Icon for POS
+              title:
+                  const Text('Keluar', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LoginPage(),
+                  ),
+                );
+              } // Navigate to POS tab
+              ),
         ],
       ),
     );
@@ -151,7 +170,7 @@ class _POSHomePageState extends State<POSHomePage> {
   Widget _buildCustomBottomNavBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
+        color: Theme.of(context).primaryColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black26,
@@ -166,22 +185,22 @@ class _POSHomePageState extends State<POSHomePage> {
         children: [
           _buildNavItem(
             icon: Icons.home,
-            label: 'Home',
+            label: 'Beranda',
             index: 0,
           ),
           _buildNavItem(
             icon: Icons.inventory,
-            label: 'Inventory',
+            label: 'Inventaris',
             index: 1,
           ),
           _buildNavItem(
             icon: Icons.receipt,
-            label: 'Transaction',
+            label: 'Transaksi',
             index: 2,
           ),
           _buildNavItem(
             icon: Icons.settings,
-            label: 'Service',
+            label: 'Layanan',
             index: 3,
           ),
           _buildNavItem(

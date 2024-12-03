@@ -56,7 +56,7 @@ class _POSOverviewPageState extends State<POSOverviewPage> {
 
     return List.generate(
       7,
-      (index) => _ChartData('Day ${index + 1}', dailyRevenue[index]),
+      (index) => _ChartData('Hari ${index + 1}', dailyRevenue[index]),
     );
   }
 
@@ -69,25 +69,25 @@ class _POSOverviewPageState extends State<POSOverviewPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Statistics Section
+              // Statistik Section
               Row(
                 children: [
                   Expanded(
-                      child: _buildStatisticCard('Total Revenue',
-                          '\$${totalRevenue.toStringAsFixed(2)}')),
+                      child: _buildStatisticCard('Total Pendapatan',
+                          'Rp${totalRevenue.toStringAsFixed(2)}')),
                   const SizedBox(width: 8),
                   Expanded(
-                      child:
-                          _buildStatisticCard('Items Sold', '$totalItemsSold')),
+                      child: _buildStatisticCard(
+                          'Barang Terjual', '$totalItemsSold')),
                 ],
               ),
               const SizedBox(height: 8),
-              _buildStatisticCard('Most Sold Item', mostSoldItem),
+              _buildStatisticCard('Barang Terlaris', mostSoldItem),
               const SizedBox(height: 16),
 
               // Chart Section
               Text(
-                'Daily Revenue',
+                'Pendapatan Harian',
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -101,7 +101,7 @@ class _POSOverviewPageState extends State<POSOverviewPage> {
                     child: SfCartesianChart(
                       primaryXAxis: CategoryAxis(),
                       primaryYAxis: NumericAxis(
-                        title: AxisTitle(text: 'Revenue (\$)'),
+                        title: AxisTitle(text: 'Pendapatan (Rp)'),
                       ),
                       series: <CartesianSeries<dynamic, dynamic>>[
                         ColumnSeries<dynamic, dynamic>(

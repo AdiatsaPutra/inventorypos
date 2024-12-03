@@ -1,4 +1,6 @@
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class InventoryPage extends StatefulWidget {
   const InventoryPage({super.key});
@@ -11,6 +13,10 @@ class _InventoryPageState extends State<InventoryPage> {
   final TextEditingController _searchController = TextEditingController();
   final List<Map<String, dynamic>> _inventory = [];
   List<Map<String, dynamic>> _filteredInventory = [];
+  final NumberFormat currencyFormatter =
+      NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0);
+  final NumberFormat numberFormatter =
+      NumberFormat.decimalPattern('id'); // For stock formatting
 
   @override
   void initState() {
@@ -18,11 +24,13 @@ class _InventoryPageState extends State<InventoryPage> {
     _filteredInventory = _inventory; // Initialize with full inventory
   }
 
-  void _addProduct(String code, String name, double price, int stock) {
+  void _addProduct(
+      String code, String name, String type, double price, int stock) {
     setState(() {
       _inventory.add({
         'code': code,
         'name': name,
+        'type': type,
         'price': price,
         'stock': stock,
       });
@@ -30,12 +38,13 @@ class _InventoryPageState extends State<InventoryPage> {
     });
   }
 
-  void _editProduct(
-      int index, String code, String name, double price, int stock) {
+  void _editProduct(int index, String code, String name, String type,
+      double price, int stock) {
     setState(() {
       _inventory[index] = {
         'code': code,
         'name': name,
+        'type': type,
         'price': price,
         'stock': stock,
       };
@@ -57,7 +66,8 @@ class _InventoryPageState extends State<InventoryPage> {
       } else {
         _filteredInventory = _inventory.where((product) {
           return product['code'].toLowerCase().contains(query.toLowerCase()) ||
-              product['name'].toLowerCase().contains(query.toLowerCase());
+              product['name'].toLowerCase().contains(query.toLowerCase()) ||
+              product['type'].toLowerCase().contains(query.toLowerCase());
         }).toList();
       }
     });
@@ -74,7 +84,7 @@ class _InventoryPageState extends State<InventoryPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Search by Product Code or Name',
+                labelText: 'Cari berdasarkan Kode, Nama, atau Tipe Produk',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -102,7 +112,7 @@ class _InventoryPageState extends State<InventoryPage> {
                     ),
                     title: Text(product['name']),
                     subtitle: Text(
-                      'Code: ${product['code']}\nPrice: \$${product['price']}\nStock: ${product['stock']}',
+                      'Kode: ${product['code']}\nTipe: ${product['type']}\nHarga: ${currencyFormatter.format(product['price'])}\nStok: ${numberFormatter.format(product['stock'])}',
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -128,7 +138,7 @@ class _InventoryPageState extends State<InventoryPage> {
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
               onPressed: () => _showProductForm(context),
-              child: const Text('Add Product'),
+              child: const Text('Tambah Produk'),
             ),
           ),
         ],
@@ -142,8 +152,10 @@ class _InventoryPageState extends State<InventoryPage> {
         TextEditingController(text: product?['code'] ?? '');
     final TextEditingController nameController =
         TextEditingController(text: product?['name'] ?? '');
+    final TextEditingController typeController =
+        TextEditingController(text: product?['type'] ?? '');
     final TextEditingController priceController = TextEditingController(
-        text: product != null ? product['price'].toString() : '');
+        text: product != null ? product['price'].toStringAsFixed(0) : '');
     final TextEditingController stockController = TextEditingController(
         text: product != null ? product['stock'].toString() : '');
 
@@ -151,26 +163,37 @@ class _InventoryPageState extends State<InventoryPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(index == null ? 'Add Product' : 'Edit Product'),
+          title: Text(index == null ? 'Tambah Produk' : 'Edit Produk'),
           content: SingleChildScrollView(
             child: Column(
               children: [
                 TextField(
                   controller: codeController,
-                  decoration: const InputDecoration(labelText: 'Product Code'),
+                  decoration: const InputDecoration(labelText: 'Kode Produk'),
                 ),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Product Name'),
+                  decoration: const InputDecoration(labelText: 'Nama Produk'),
+                ),
+                TextField(
+                  controller: typeController,
+                  decoration: const InputDecoration(labelText: 'Tipe Produk'),
                 ),
                 TextField(
                   controller: priceController,
-                  decoration: const InputDecoration(labelText: 'Price'),
+                  decoration: const InputDecoration(labelText: 'Harga'),
                   keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    CurrencyTextInputFormatter.currency(
+                      decimalDigits: 0,
+                      locale: 'id_ID',
+                      symbol: 'Rp',
+                    )
+                  ],
                 ),
                 TextField(
                   controller: stockController,
-                  decoration: const InputDecoration(labelText: 'Stock'),
+                  decoration: const InputDecoration(labelText: 'Stok'),
                   keyboardType: TextInputType.number,
                 ),
               ],
@@ -179,26 +202,33 @@ class _InventoryPageState extends State<InventoryPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () {
                 final String code = codeController.text.trim();
                 final String name = nameController.text.trim();
-                final double price =
-                    double.tryParse(priceController.text.trim()) ?? 0;
-                final int stock =
-                    int.tryParse(stockController.text.trim()) ?? 0;
+                final String type = typeController.text.trim();
+                final double price = double.tryParse(priceController.text
+                        .trim()
+                        .replaceAll('Rp', '')
+                        .replaceAll('.', '')) ??
+                    0;
+                final int stock = int.tryParse(stockController.text
+                        .trim()
+                        .replaceAll('Rp', '')
+                        .replaceAll('.', '')) ??
+                    0;
 
                 if (index == null) {
-                  _addProduct(code, name, price, stock);
+                  _addProduct(code, name, type, price, stock);
                 } else {
-                  _editProduct(index, code, name, price, stock);
+                  _editProduct(index, code, name, type, price, stock);
                 }
 
                 Navigator.pop(context);
               },
-              child: const Text('Save'),
+              child: const Text('Simpan'),
             ),
           ],
         );
