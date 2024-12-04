@@ -3,6 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links
+  connectivity_plus
+  url_launcher_windows
   window_size
 )
 

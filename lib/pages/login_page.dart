@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:inventorypos/pages/homepage.dart';
+import 'package:inventorypos/provider/login_provider.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final loginProvider = Provider.of<LoginProvider>(context);
+
     return Scaffold(
       body: Row(
         children: [
-          // Left side: Computer image
           Expanded(
             flex: 2,
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage(
-                    'assets/image/login_image.jpg',
-                  ),
+                  image: AssetImage('assets/image/login_image.jpg'),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
           ),
-
-          // Right side: Login form
           Expanded(
             flex: 1,
             child: Padding(
@@ -30,46 +32,63 @@ class LoginPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset(
-                    'assets/logo/sasa.png',
-                    width: 130,
-                  ),
-                  Text(
-                    'Login',
-                    style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 40),
+                  Image.asset('assets/logo/sasa.png', width: 130),
+                  const Text('Login',
+                      style:
+                          TextStyle(fontSize: 36, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 40),
                   TextField(
-                    decoration: InputDecoration(
+                    controller: loginProvider.usernameController,
+                    decoration: const InputDecoration(
                       labelText: 'Username',
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.all(16),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   TextField(
-                    decoration: InputDecoration(
+                    controller: loginProvider.passwordController,
+                    decoration: const InputDecoration(
                       labelText: 'Password',
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.all(16),
                     ),
                     obscureText: true,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => POSHomePage(),
+                    child: loginProvider.isLoading
+                        ? const ElevatedButton(
+                            onPressed: null,
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        : ElevatedButton(
+                            onPressed: () async {
+                              final res = await loginProvider.login(context);
+                              if (res == 'success') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => POSHomePage(),
+                                  ),
+                                );
+                              } else {
+                                Fluttertoast.showToast(
+                                    msg: res,
+                                    toastLength: Toast.LENGTH_LONG,
+                                    gravity: ToastGravity.CENTER,
+                                    timeInSecForIosWeb: 1,
+                                    backgroundColor: Colors.red,
+                                    textColor: Colors.white,
+                                    fontSize: 16.0);
+                              }
+                            },
+                            child: const Text('Login'),
                           ),
-                        );
-                      },
-                      child: Text('Login'),
-                    ),
                   ),
                 ],
               ),
