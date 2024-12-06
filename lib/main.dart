@@ -1,3 +1,5 @@
+import 'package:inventorypos/state_util.dart';
+import 'package:inventorypos/core.dart';
 import 'package:flutter/material.dart';
 import 'package:inventorypos/keys/keys.dart';
 import 'package:inventorypos/pages/homepage.dart';
@@ -33,6 +35,7 @@ class MyApp extends StatelessWidget {
         ],
         child: MaterialApp(
           title: 'Flutter Demo',
+          navigatorKey: Get.navigatorKey,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF3651A4)),
             primaryColor: Color(0xFF3651A4),

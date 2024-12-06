@@ -77,14 +77,11 @@ class LoginPage extends StatelessWidget {
                                   ),
                                 );
                               } else {
-                                Fluttertoast.showToast(
-                                    msg: res,
-                                    toastLength: Toast.LENGTH_LONG,
-                                    gravity: ToastGravity.CENTER,
-                                    timeInSecForIosWeb: 1,
-                                    backgroundColor: Colors.red,
-                                    textColor: Colors.white,
-                                    fontSize: 16.0);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(res),
+                                  ),
+                                );
                               }
                             },
                             child: const Text('Login'),

@@ -162,8 +162,11 @@ class _POSPageState extends State<POSPage> {
                   Expanded(
                     child: GridView.builder(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount:
-                            MediaQuery.of(context).size.width < 600 ? 2 : 4,
+                        crossAxisCount: MediaQuery.of(context).size.width < 600
+                            ? 2
+                            : MediaQuery.of(context).size.width < 1920
+                                ? 4
+                                : 6,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
                         childAspectRatio: 0.67,
