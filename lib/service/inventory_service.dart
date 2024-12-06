@@ -72,7 +72,6 @@ class InventoryService {
 
   /// Encodes an image at the given path to base64 format.
   Future<String?> _encodeImageToBase64(String imagePath) async {
-    final db = await DatabaseHelper.instance.database;
     try {
       final file = File(imagePath);
       final bytes = await file.readAsBytes(); // Read the image as bytes

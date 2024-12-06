@@ -8,8 +8,8 @@ class TransactionService {
 
   // Generate a unique transaction code
   String _generateTransactionCode(int id) {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return 'TXN-${id.toString().padLeft(4, '0')}-$timestamp';
+    final timestamp = DateTime.now();
+    return 'SASA-${id.toString().padLeft(4, '0')}-${timestamp.hour}${timestamp.minute}${timestamp.day}${timestamp.month}${timestamp.year}';
   }
 
   // Add a new transaction
