@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:inventorypos/service/offline_login_service.dart';
 import 'package:inventorypos/service/online_login_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginProvider extends ChangeNotifier {
   final TextEditingController usernameController = TextEditingController();
@@ -14,6 +15,7 @@ class LoginProvider extends ChangeNotifier {
 
   LoginProvider() {
     _checkConnectivity();
+    checkAutoLogin(); // Check for auto login on start
   }
 
   Future<void> _checkConnectivity() async {
@@ -22,7 +24,21 @@ class LoginProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> login(BuildContext context) async {
+  // Auto-login check based on saved credentials
+  Future<void> checkAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? savedUsername = prefs.getString('username');
+    String? savedPassword = prefs.getString('password');
+
+    if (savedUsername != null && savedPassword != null) {
+      usernameController.text = savedUsername;
+      passwordController.text = savedPassword;
+      await login(null); // Perform login automatically
+    }
+  }
+
+  // Login function
+  Future<String> login(BuildContext? context) async {
     String username = usernameController.text;
     String password = passwordController.text;
 
@@ -30,19 +46,23 @@ class LoginProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print('THIS');
       bool isSuccess;
+      // Uncomment this if you want to sync online logic
       // if (isOnline) {
       //   isSuccess = await _onlineLoginService.login(username, password);
-      // Uncomment this if sync logic is implemented
-      // if (isSuccess) {
-      //   await _offlineLoginService.syncWithOnline(_onlineLoginService);
-      // }
+      //   if (isSuccess) {
+      //     await _offlineLoginService.syncWithOnline(_onlineLoginService);
+      //   }
       // } else {
       isSuccess = await _offlineLoginService.login(username, password);
       // }
 
       if (isSuccess) {
+        // Save credentials for auto-login next time
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('username', username);
+        await prefs.setString('password', password);
+
         return 'success';
       } else {
         return 'Invalid username or password';
@@ -53,6 +73,16 @@ class LoginProvider extends ChangeNotifier {
       isLoading = false; // Reset loading to false
       notifyListeners();
     }
+  }
+
+  // Logout function to clear stored credentials
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('username');
+    await prefs.remove('password');
+    usernameController.clear();
+    passwordController.clear();
+    notifyListeners();
   }
 
   @override

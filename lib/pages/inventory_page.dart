@@ -1,144 +1,124 @@
-import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+import 'package:inventorypos/extension/number_extension.dart';
+import 'package:inventorypos/provider/inventory_provider.dart';
+import 'package:provider/provider.dart';
 
-class InventoryPage extends StatefulWidget {
-  const InventoryPage({super.key});
-
-  @override
-  _InventoryPageState createState() => _InventoryPageState();
-}
-
-class _InventoryPageState extends State<InventoryPage> {
-  final TextEditingController _searchController = TextEditingController();
-  final List<Map<String, dynamic>> _inventory = [];
-  List<Map<String, dynamic>> _filteredInventory = [];
-  final NumberFormat currencyFormatter =
-      NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0);
-  final NumberFormat numberFormatter =
-      NumberFormat.decimalPattern('id'); // For stock formatting
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredInventory = _inventory; // Initialize with full inventory
-  }
-
-  void _addProduct(
-      String code, String name, String type, double price, int stock) {
-    setState(() {
-      _inventory.add({
-        'code': code,
-        'name': name,
-        'type': type,
-        'price': price,
-        'stock': stock,
-      });
-      _filteredInventory = _inventory;
-    });
-  }
-
-  void _editProduct(int index, String code, String name, String type,
-      double price, int stock) {
-    setState(() {
-      _inventory[index] = {
-        'code': code,
-        'name': name,
-        'type': type,
-        'price': price,
-        'stock': stock,
-      };
-      _filteredInventory = _inventory;
-    });
-  }
-
-  void _deleteProduct(int index) {
-    setState(() {
-      _inventory.removeAt(index);
-      _filteredInventory = _inventory;
-    });
-  }
-
-  void _searchInventory(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredInventory = _inventory;
-      } else {
-        _filteredInventory = _inventory.where((product) {
-          return product['code'].toLowerCase().contains(query.toLowerCase()) ||
-              product['name'].toLowerCase().contains(query.toLowerCase()) ||
-              product['type'].toLowerCase().contains(query.toLowerCase());
-        }).toList();
-      }
-    });
-  }
+class InventoryPage extends StatelessWidget {
+  const InventoryPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<InventoryProvider>(context);
+
     return Scaffold(
       body: Column(
         children: [
           // Search Bar
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(16),
             child: TextField(
-              controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Cari berdasarkan Kode, Nama, atau Tipe Produk',
+                labelText: 'Search',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              onChanged: _searchInventory,
+              onChanged: provider.searchInventory,
             ),
           ),
-          // Inventory List
-          Expanded(
-            child: ListView.builder(
-              itemCount: _filteredInventory.length,
-              itemBuilder: (context, index) {
-                final product = _filteredInventory[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: Text(
-                        product['code'][0].toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
+          // DataTable or Loading Indicator
+          provider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : provider.filteredInventory.isEmpty
+                  ? const Center(child: Text('No products available'))
+                  : Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: DataTable(
+                            columnSpacing: 20,
+                            columns: const [
+                              DataColumn(label: Text('Name')),
+                              DataColumn(label: Text('Code')),
+                              DataColumn(label: Text('Type')),
+                              DataColumn(label: Text('Price')),
+                              DataColumn(label: Text('Stock')),
+                              DataColumn(label: Text('Actions')),
+                            ],
+                            rows: provider.paginatedInventory.map((product) {
+                              return DataRow(cells: [
+                                DataCell(Text(product['name'])),
+                                DataCell(Text(product['code'])),
+                                DataCell(Text(product['type'])),
+                                DataCell(Text(
+                                  (product['price'] as double)
+                                      .toInt()
+                                      .toRupiah(),
+                                )),
+                                DataCell(Text('${product['stock']}')),
+                                DataCell(
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.info,
+                                            color: Colors.blue),
+                                        onPressed: () => _showProductDetails(
+                                            context, product),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit,
+                                            color: Colors.orange),
+                                        onPressed: () => _showProductForm(
+                                            context, provider, product),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete,
+                                            color: Colors.red),
+                                        onPressed: () => provider
+                                            .deleteProduct(product['id']),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ]);
+                            }).toList(),
+                          ),
+                        ),
                       ),
                     ),
-                    title: Text(product['name']),
-                    subtitle: Text(
-                      'Kode: ${product['code']}\nTipe: ${product['type']}\nHarga: ${currencyFormatter.format(product['price'])}\nStok: ${numberFormatter.format(product['stock'])}',
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.orange),
-                          onPressed: () =>
-                              _showProductForm(context, index, product),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteProduct(index),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+          // Pagination Controls
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: provider.currentPage > 1
+                      ? () => provider.previousPage()
+                      : null,
+                ),
+                Text('Page ${provider.currentPage} of ${provider.totalPages}'),
+                IconButton(
+                  icon: const Icon(Icons.arrow_forward),
+                  onPressed: provider.currentPage < provider.totalPages
+                      ? () => provider.nextPage()
+                      : null,
+                ),
+              ],
             ),
           ),
           // Add Product Button
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
-              onPressed: () => _showProductForm(context),
-              child: const Text('Tambah Produk'),
+              onPressed: () => _showProductForm(context, provider),
+              child: const Text('Add Product'),
             ),
           ),
         ],
@@ -146,42 +126,38 @@ class _InventoryPageState extends State<InventoryPage> {
     );
   }
 
-  void _showProductForm(BuildContext context,
-      [int? index, Map<String, dynamic>? product]) {
-    final TextEditingController codeController =
-        TextEditingController(text: product?['code'] ?? '');
+  void _showProductForm(BuildContext context, InventoryProvider provider,
+      [Map<String, dynamic>? product]) {
     final TextEditingController nameController =
         TextEditingController(text: product?['name'] ?? '');
     final TextEditingController typeController =
         TextEditingController(text: product?['type'] ?? '');
     final TextEditingController priceController = TextEditingController(
-        text: product != null ? product['price'].toStringAsFixed(0) : '');
-    final TextEditingController stockController = TextEditingController(
-        text: product != null ? product['stock'].toString() : '');
+        text: (product?['price'] as double?)?.toStringAsFixed(0) ?? '');
+    final TextEditingController stockController =
+        TextEditingController(text: product?['stock']?.toString() ?? '');
+
+    provider.clearSelectedImage();
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(index == null ? 'Tambah Produk' : 'Edit Produk'),
+          title: Text(product == null ? 'Add Product' : 'Edit Product'),
           content: SingleChildScrollView(
             child: Column(
               children: [
                 TextField(
-                  controller: codeController,
-                  decoration: const InputDecoration(labelText: 'Kode Produk'),
-                ),
-                TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Nama Produk'),
+                  decoration: const InputDecoration(labelText: 'Product Name'),
                 ),
                 TextField(
                   controller: typeController,
-                  decoration: const InputDecoration(labelText: 'Tipe Produk'),
+                  decoration: const InputDecoration(labelText: 'Product Type'),
                 ),
                 TextField(
                   controller: priceController,
-                  decoration: const InputDecoration(labelText: 'Harga'),
+                  decoration: const InputDecoration(labelText: 'Price'),
                   keyboardType: TextInputType.number,
                   inputFormatters: [
                     CurrencyTextInputFormatter.currency(
@@ -193,8 +169,35 @@ class _InventoryPageState extends State<InventoryPage> {
                 ),
                 TextField(
                   controller: stockController,
-                  decoration: const InputDecoration(labelText: 'Stok'),
+                  decoration: const InputDecoration(labelText: 'Stock'),
                   keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 10),
+                // Image Picker
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await provider.pickImage();
+                      },
+                      icon: const Icon(Icons.image),
+                      label: const Text('Select Image'),
+                    ),
+                    const SizedBox(width: 10),
+                    Consumer<InventoryProvider>(
+                      builder: (context, provider, _) {
+                        if (provider.selectedImage == null) {
+                          return const SizedBox();
+                        }
+                        return Image.file(
+                          provider.selectedImage!,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -202,11 +205,10 @@ class _InventoryPageState extends State<InventoryPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
-                final String code = codeController.text.trim();
                 final String name = nameController.text.trim();
                 final String type = typeController.text.trim();
                 final double price = double.tryParse(priceController.text
@@ -214,21 +216,57 @@ class _InventoryPageState extends State<InventoryPage> {
                         .replaceAll('Rp', '')
                         .replaceAll('.', '')) ??
                     0;
-                final int stock = int.tryParse(stockController.text
-                        .trim()
-                        .replaceAll('Rp', '')
-                        .replaceAll('.', '')) ??
-                    0;
+                final int stock =
+                    int.tryParse(stockController.text.trim()) ?? 0;
 
-                if (index == null) {
-                  _addProduct(code, name, type, price, stock);
+                if (product == null) {
+                  provider.addProduct(name, type, price, stock);
                 } else {
-                  _editProduct(index, code, name, type, price, stock);
+                  provider.updateProduct(
+                      product['id'], name, type, price, stock);
                 }
 
                 Navigator.pop(context);
               },
-              child: const Text('Simpan'),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showProductDetails(BuildContext context, Map<String, dynamic> product) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(product['name']),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product Image
+                if (product['image_path'] != null)
+                  Image.memory(
+                    base64Decode(product['image_path']),
+                    width: 400,
+                    height: 400,
+                  ),
+                const SizedBox(height: 10),
+                // Product Details
+                Text('Code: ${product['code']}'),
+                Text('Type: ${product['type']}'),
+                Text(
+                    'Price: ${(product['price'] as double).toInt().toRupiah()}'),
+                Text('Stock: ${product['stock']}'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
             ),
           ],
         );

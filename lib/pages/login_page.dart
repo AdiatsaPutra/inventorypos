@@ -1,11 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:inventorypos/pages/homepage.dart';
 import 'package:inventorypos/provider/login_provider.dart';
 import 'package:provider/provider.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Check if auto-login is successful when the page is first loaded
+    final loginProvider = Provider.of<LoginProvider>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loginProvider.checkAutoLogin().then((_) {
+        // If user is logged in after auto-login, navigate to home page
+        if (loginProvider.usernameController.text.isNotEmpty) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => POSHomePage()),
+          );
+        }
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

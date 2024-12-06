@@ -1,269 +1,111 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:inventorypos/extension/number_extension.dart';
+import 'package:inventorypos/provider/inventory_provider.dart';
+import 'package:inventorypos/provider/pos_provider.dart';
+import 'package:inventorypos/provider/transaction_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart'; // Import this for currency formatting
 
-class POSPage extends StatefulWidget {
-  @override
-  _POSPageState createState() => _POSPageState();
-}
-
-class _POSPageState extends State<POSPage> {
-  List<Map<String, dynamic>> allProducts = List.generate(10, (index) {
-    return {
-      'name': 'Produk $index',
-      'price': 100000.00,
-      'stock': 10, // Stok produk
-      'imageUrl':
-          'https://static.retailworldvn.com/Products/Images/12217/321641/laptop-lenovo-ideapad-slim-3-14iau7-i3-1215u-8gb-256gb-win11-82rj00cpid-arc-grey-1.jpg'
-    };
-  });
-  List<Map<String, dynamic>> displayedProducts = [];
-  List<Map<String, dynamic>> selectedProducts = [];
-  TextEditingController searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    displayedProducts = List.from(allProducts);
-  }
-
-  void _filterProducts(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        displayedProducts = List.from(allProducts);
-      } else {
-        displayedProducts = allProducts
-            .where((product) =>
-                product['name'].toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
-    });
-  }
-
-  void _addToCart(Map<String, dynamic> product) {
-    setState(() {
-      // Check if stock is available
-      if (product['stock'] > 0) {
-        // Check if product is already in cart
-        int index =
-            selectedProducts.indexWhere((p) => p['name'] == product['name']);
-        if (index != -1) {
-          if (selectedProducts[index]['count'] < product['stock']) {
-            selectedProducts[index]['count']++;
-          } else {
-            // Notify user that stock is insufficient
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Stok tidak cukup untuk ${product['name']}'),
-            ));
-          }
-        } else {
-          selectedProducts.add({
-            'name': product['name'],
-            'price': product['price'],
-            'count': 1,
-          });
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Stok habis untuk ${product['name']}'),
-        ));
-      }
-    });
-  }
-
-  void _incrementCount(int index) {
-    setState(() {
-      var product = selectedProducts[index];
-      if (product['count'] <
-          allProducts
-              .firstWhere((p) => p['name'] == product['name'])['stock']) {
-        selectedProducts[index]['count']++;
-      }
-    });
-  }
-
-  void _decrementCount(int index) {
-    setState(() {
-      if (selectedProducts[index]['count'] > 1) {
-        selectedProducts[index]['count']--;
-      } else {
-        selectedProducts.removeAt(index);
-      }
-    });
-  }
-
-  double _calculateSubtotal() {
-    return selectedProducts.fold(
-        0, (total, product) => total + (product['price'] * product['count']));
-  }
-
-  double _calculateTax() {
-    return _calculateSubtotal() * 0.1; // 10% Tax
-  }
-
-  double _calculateTotal() {
-    return _calculateSubtotal() + _calculateTax();
-  }
-
-  void _checkout() {
-    // Checkout logic
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Checkout"),
-          content: Text("Total: Rp${_calculateTotal().toStringAsFixed(2)}"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  selectedProducts.clear(); // Clear cart after checkout
-                });
-                Navigator.pop(context);
-              },
-              child: Text("Konfirmasi"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text("Batal"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
+class POSPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final posProvider = Provider.of<POSProvider>(context);
+    final inventoryProvider = Provider.of<InventoryProvider>(context);
+
+    if (posProvider.displayedProducts.isEmpty) {
+      posProvider.initialize(context);
+    }
+
     return Scaffold(
-      body: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: TextField(
-                      controller: searchController,
-                      onChanged: _filterProducts,
+      body: Consumer<InventoryProvider>(
+        builder: (context, value, child) => Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: posProvider.searchController,
+                      onChanged: (query) =>
+                          posProvider.filterProducts(context, query),
                       decoration: InputDecoration(
-                        hintText: 'Cari Produk...',
+                        hintText: 'Cari',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                         contentPadding: EdgeInsets.symmetric(horizontal: 10),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: MediaQuery.of(context).size.width < 600
-                            ? 2
-                            : MediaQuery.of(context).size.width < 1920
-                                ? 4
-                                : 6,
-                        crossAxisSpacing: 20,
-                        mainAxisSpacing: 20,
-                        childAspectRatio: 0.67,
-                      ),
-                      itemCount: displayedProducts.length,
-                      itemBuilder: (context, index) {
-                        return ProductCard(
-                          productName: displayedProducts[index]['name'],
-                          price: displayedProducts[index]['price'],
-                          imageUrl: displayedProducts[index]['imageUrl'],
-                          stock: displayedProducts[index]['stock'],
-                          onAddToCart: () =>
-                              _addToCart(displayedProducts[index]),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Ringkasan Transaksi", style: TextStyle(fontSize: 20)),
-                  Divider(),
-                  Expanded(
-                    child: ListView(
-                      children: selectedProducts.map((product) {
-                        int index = selectedProducts.indexOf(product);
-                        return Card(
-                          margin: EdgeInsets.symmetric(vertical: 8),
-                          elevation: 4,
-                          child: ListTile(
-                            contentPadding: EdgeInsets.all(8),
-                            title:
-                                Text("${product['name']} x${product['count']}"),
-                            subtitle: Text(
-                                "Rp${(product['price'] * product['count']).toStringAsFixed(2)}"),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.add),
-                                  onPressed: () => _incrementCount(index),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.remove),
-                                  onPressed: () => _decrementCount(index),
-                                ),
-                              ],
+                    SizedBox(height: 20),
+                    Expanded(
+                      child:
+                          // inventoryProvider.isLoading
+                          //     ? Center(child: CircularProgressIndicator())
+                          //     :
+                          LayoutBuilder(
+                        builder: (context, constraints) {
+                          final screenWidth = constraints.maxWidth;
+
+                          int crossAxisCount;
+                          double cardSize;
+
+                          if (screenWidth > 1600) {
+                            crossAxisCount = 6;
+                            cardSize = 300;
+                          } else if (screenWidth > 1200) {
+                            crossAxisCount = 4;
+                            cardSize = 300;
+                          } else if (screenWidth > 800) {
+                            crossAxisCount = 3;
+                            cardSize = 300;
+                          } else {
+                            crossAxisCount = 3;
+                            cardSize = 300;
+                          }
+
+                          return GridView.builder(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: 20,
+                              mainAxisSpacing: 20,
                             ),
-                          ),
-                        );
-                      }).toList(),
+                            itemCount: posProvider.displayedProducts.length,
+                            itemBuilder: (context, index) {
+                              final product =
+                                  posProvider.displayedProducts[index];
+                              return SizedBox(
+                                width: cardSize,
+                                height: cardSize,
+                                child: ProductCard(
+                                  productName: product['name'],
+                                  price: product['price'],
+                                  imageUrl: product['image_path'],
+                                  stock: product['stock'],
+                                  onAddToCart: () =>
+                                      posProvider.addToCart(context, product),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Subtotal:"),
-                      Text("Rp${_calculateSubtotal().toStringAsFixed(2)}"),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Pajak:"),
-                      Text("Rp${_calculateTax().toStringAsFixed(2)}"),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Total:",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text("Rp${_calculateTotal().toStringAsFixed(2)}",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _checkout,
-                      child: Text("Checkout"),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+            Expanded(
+              flex: 1,
+              child: CartSummary(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -286,56 +128,156 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Card(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 32,
-            spreadRadius: -4,
-            offset: const Offset(0, 16),
-          ),
-        ],
       ),
+      elevation: 3,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-            child: Image.network(
-              imageUrl,
-              fit: BoxFit.cover,
-            ),
-          ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  SizedBox(height: 8),
-                  Text(productName,
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 4),
-                  Text("Rp${price.toStringAsFixed(2)}"),
-                  SizedBox(height: 4),
-                  Text("Stok: $stock"),
-                ],
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+              child: imageUrl.isNotEmpty
+                  ? Image.memory(
+                      base64Decode(imageUrl),
+                    )
+                  : Container(
+                      color: Colors.grey[200],
+                      child: Icon(Icons.image, size: 50, color: Colors.grey),
+                    ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: stock > 0 ? onAddToCart : null,
-                child: Text(stock > 0 ? "Tambah" : "Stok Habis"),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  productName,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                SizedBox(height: 5),
+                Text('Harga: ${(price.toInt().toRupiah())}'), // Updated to IDR
+                Text('Stok: $stock'),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
+            child: ElevatedButton(
+              onPressed: onAddToCart,
+              child: Text('Tambah'),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class CartSummary extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final posProvider = Provider.of<POSProvider>(context);
+
+    return Consumer<POSProvider>(
+      builder: (context, value, child) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Keranjang',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 20),
+            posProvider.selectedProducts.isEmpty
+                ? Expanded(child: Center(child: Text('Belum ada keranjang')))
+                : Expanded(
+                    child: ListView.builder(
+                      itemCount: posProvider.selectedProducts.length,
+                      itemBuilder: (context, index) {
+                        final product = posProvider.selectedProducts[index];
+
+                        return Card(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          elevation: 4,
+                          child: ListTile(
+                            title: Text(product['name']),
+                            subtitle: Text('Jumlah: ${product['count']}'),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.remove),
+                                  onPressed: () {
+                                    posProvider.removeCart(context, product);
+                                  },
+                                ),
+                                Text(
+                                  ((product['price'] * product['count'])
+                                          as double)
+                                      .toInt()
+                                      .toRupiah(),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.add),
+                                  onPressed: () {
+                                    posProvider.addToCart(context, product);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+            Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Text(
+                'Total: ${posProvider.selectedProducts.fold<double>(
+                      0,
+                      (sum, product) =>
+                          sum + (product['price'] * product['count']),
+                    ).toInt().toRupiah()}',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  final transactionProvider =
+                      Provider.of<TransactionProvider>(context, listen: false);
+                  final res = await transactionProvider.addTransaction(
+                    total: posProvider.selectedProducts.fold<double>(
+                      0,
+                      (sum, product) =>
+                          sum + (product['price'] * product['count']),
+                    ),
+                    products: posProvider.selectedProducts,
+                  );
+                  if (res == 'success') {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Checkout complete!')),
+                    );
+                  }
+                },
+                child: Text('Checkout'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

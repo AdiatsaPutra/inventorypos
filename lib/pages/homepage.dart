@@ -5,6 +5,9 @@ import 'package:inventorypos/pages/pos_overview_page.dart';
 import 'package:inventorypos/pages/pos_page.dart';
 import 'package:inventorypos/pages/service_page.dart';
 import 'package:inventorypos/pages/transaction_page.dart';
+import 'package:inventorypos/provider/inventory_provider.dart';
+import 'package:inventorypos/provider/pos_provider.dart';
+import 'package:provider/provider.dart';
 
 class POSHomePage extends StatefulWidget {
   const POSHomePage({super.key});
@@ -143,9 +146,12 @@ class _POSHomePageState extends State<POSHomePage> {
           ListTile(
             leading: const Icon(Icons.local_mall,
                 color: Colors.white), // Icon for POS
-            title: const Text('Point of Sale',
-                style: TextStyle(color: Colors.white)),
-            onTap: () => _onTabSelected(4), // Navigate to POS tab
+            title: const Text('Kasir', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              final inventoryProvider = Provider.of<InventoryProvider>(context);
+              inventoryProvider.fetchProducts();
+              _onTabSelected(4);
+            }, // Navigate to POS tab
           ),
           ListTile(
               leading:
@@ -205,7 +211,13 @@ class _POSHomePageState extends State<POSHomePage> {
           ),
           _buildNavItem(
             icon: Icons.local_mall, // Icon for POS
-            label: 'POS',
+            label: 'Kasir',
+            onTap: () {
+              final posProvider =
+                  Provider.of<POSProvider>(context, listen: false);
+              posProvider.initialize(context);
+              _onTabSelected(4);
+            },
             index: 4, // Index for POS tab
           ),
         ],
@@ -213,12 +225,16 @@ class _POSHomePageState extends State<POSHomePage> {
     );
   }
 
-  Widget _buildNavItem(
-      {required IconData icon, required String label, required int index}) {
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required int index,
+    VoidCallback? onTap,
+  }) {
     final bool isSelected = _currentIndex == index;
 
     return GestureDetector(
-      onTap: () => _onTabSelected(index),
+      onTap: onTap ?? () => _onTabSelected(index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
