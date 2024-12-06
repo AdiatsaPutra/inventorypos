@@ -38,20 +38,27 @@ class POSProvider with ChangeNotifier {
   }
 
   void removeCart(BuildContext context, Map<String, dynamic> product) {
-    final inventoryProvider =
-        Provider.of<InventoryProvider>(context, listen: false);
-
     int index =
         selectedProducts.indexWhere((p) => p['name'] == product['name']);
-    if (index != -1 && selectedProducts[index]['count'] > 0) {
-      if (selectedProducts[index]['count'] < product['stock']) {
+
+    // Ensure the product exists in the list
+    if (index != -1) {
+      if (selectedProducts[index]['count'] > 0) {
         selectedProducts[index]['count']--;
+
+        // Remove the product if its count becomes zero
+        if (selectedProducts[index]['count'] == 0) {
+          selectedProducts.removeAt(index);
+        }
       }
     }
 
-    if (selectedProducts[index]['count'] == 0) {
-      selectedProducts.removeAt(index);
-    }
+    // Notify listeners to update UI
+    notifyListeners();
+  }
+
+  void clearCart() {
+    selectedProducts.clear();
     notifyListeners();
   }
 }

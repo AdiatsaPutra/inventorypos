@@ -1,225 +1,335 @@
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter/material.dart';
+import 'package:inventorypos/provider/service_provider.dart';
+import 'package:provider/provider.dart';
 
-class ServicePage extends StatefulWidget {
-  const ServicePage({super.key});
-
-  @override
-  _ServicePageState createState() => _ServicePageState();
-}
-
-class _ServicePageState extends State<ServicePage> {
-  final TextEditingController _searchController = TextEditingController();
-  final List<Map<String, String>> _services = [];
-  List<Map<String, String>> _filteredServices = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredServices = _services;
-  }
-
-  void _addService(String name, String phone, String deviceName,
-      String deviceDetail, String complaint) {
-    setState(() {
-      _services.add({
-        'name': name,
-        'phone': phone,
-        'deviceName': deviceName,
-        'deviceDetail': deviceDetail,
-        'complaint': complaint,
-      });
-      _filteredServices = _services;
-    });
-  }
-
-  void _editService(int index, String name, String phone, String deviceName,
-      String deviceDetail, String complaint) {
-    setState(() {
-      _services[index] = {
-        'name': name,
-        'phone': phone,
-        'deviceName': deviceName,
-        'deviceDetail': deviceDetail,
-        'complaint': complaint,
-      };
-      _filteredServices = _services;
-    });
-  }
-
-  void _deleteService(int index) {
-    setState(() {
-      _services.removeAt(index);
-      _filteredServices = _services;
-    });
-  }
-
-  void _searchServices(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredServices = _services;
-      } else {
-        _filteredServices = _services.where((service) {
-          return service['name']!.toLowerCase().contains(query.toLowerCase()) ||
-              service['phone']!.toLowerCase().contains(query.toLowerCase()) ||
-              service['deviceName']!
-                  .toLowerCase()
-                  .contains(query.toLowerCase()) ||
-              service['deviceDetail']!
-                  .toLowerCase()
-                  .contains(query.toLowerCase()) ||
-              service['complaint']!.toLowerCase().contains(query.toLowerCase());
-        }).toList();
-      }
-    });
-  }
-
+class ServicePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText:
-                    'Cari berdasarkan Nama, Telepon, Perangkat, atau Keluhan',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onChanged: _searchServices,
-            ),
+      body: Consumer<ServiceProvider>(
+        builder: (context, serviceProvider, child) {
+          return Column(
+            children: [
+              _buildSearchBar(serviceProvider),
+              if (serviceProvider.isLoading)
+                Center(child: CircularProgressIndicator())
+              else
+                _buildServiceTable(serviceProvider, context),
+              _buildPagination(serviceProvider),
+            ],
+          );
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: ElevatedButton(
+        onPressed: () => _showCreateDialog(context),
+        child: Text('Tambah Service'),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(ServiceProvider serviceProvider) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextField(
+        controller: serviceProvider.searchController,
+        decoration: InputDecoration(
+          labelText: 'Cari service',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-          // Service List
-          Expanded(
-            child: ListView.builder(
-              itemCount: _filteredServices.length,
-              itemBuilder: (context, index) {
-                final service = _filteredServices[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: Text(
-                        service['name']![0].toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    title: Text(service['name']!),
-                    subtitle: Text(
-                        'Telepon: ${service['phone']}\nPerangkat: ${service['deviceName']} (${service['deviceDetail']})\nKeluhan: ${service['complaint']}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.orange),
-                          onPressed: () =>
-                              _showServiceForm(context, index, service),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteService(index),
-                        ),
-                      ],
-                    ),
+          suffixIcon: IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              serviceProvider.onSearch(serviceProvider.searchController.text);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceTable(
+      ServiceProvider serviceProvider, BuildContext context) {
+    return SingleChildScrollView(
+      child: SizedBox(
+        width: double.infinity,
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('Kode Service')),
+            DataColumn(label: Text('Nama Service')),
+            DataColumn(label: Text('No. HP')),
+            DataColumn(label: Text('Keluhan')),
+            DataColumn(label: Text('Tipe Device')),
+            // DataColumn(label: Text('Price')),
+            DataColumn(label: Text('Aksi')),
+          ],
+          rows: serviceProvider.services.map((service) {
+            return DataRow(cells: [
+              DataCell(Text(service['code'] ?? '')),
+              DataCell(Text(service['name'] ?? '-')),
+              DataCell(Text(service['phone'].toString().isEmpty
+                  ? '-'
+                  : service['phone'])),
+              DataCell(Text(service['description'] ?? '')),
+              DataCell(Text(service['device_type'] ?? '')),
+              // DataCell(Text(service['price']?.toString() ?? '0.0')),
+              DataCell(_buildServiceActions(service['id'], context)),
+            ]);
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceActions(int serviceId, BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(
+            Icons.edit,
+            color: Colors.yellow,
+          ),
+          onPressed: () => _showEditDialog(serviceId, context),
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.delete,
+            color: Colors.red,
+          ),
+          onPressed: () => _showDeleteDialog(serviceId, context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPagination(ServiceProvider serviceProvider) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: serviceProvider.currentPage > 1
+              ? () =>
+                  serviceProvider.onPagination(serviceProvider.currentPage - 1)
+              : null,
+        ),
+        Text('Page ${serviceProvider.currentPage}'),
+        IconButton(
+          icon: Icon(Icons.arrow_forward),
+          onPressed: serviceProvider.services.length ==
+                  serviceProvider.itemsPerPage
+              ? () =>
+                  serviceProvider.onPagination(serviceProvider.currentPage + 1)
+              : null,
+        ),
+      ],
+    );
+  }
+
+  void _showCreateDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final deviceTypeController = TextEditingController();
+    final priceController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Tambah Service'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: 'Nama Service'),
+              ),
+              TextField(
+                controller: phoneController,
+                decoration: InputDecoration(labelText: 'No HP'),
+                keyboardType: TextInputType.phone,
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(labelText: 'Keluhan'),
+              ),
+              TextField(
+                controller: deviceTypeController,
+                decoration: InputDecoration(labelText: 'Tipe Device'),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: InputDecoration(labelText: 'Harga'),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  CurrencyTextInputFormatter.currency(
+                    decimalDigits: 0,
+                    locale: 'id_ID',
+                    symbol: 'Rp',
+                  )
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final code =
+                  '${deviceTypeController.text}${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().day}${DateTime.now().month}${DateTime.now().year}';
+              final service = {
+                'code': code,
+                'name': nameController.text,
+                'phone': phoneController.text,
+                'description': descriptionController.text,
+                'device_type': deviceTypeController.text,
+                'price': double.tryParse(priceController.text) ?? 0.0,
+              };
+              final serviceProvider =
+                  Provider.of<ServiceProvider>(context, listen: false);
+              final res = await serviceProvider.createService(service);
+              if (res.isSuccess) {
+                serviceProvider.fetchAllServicesFromDB();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Berhasil'),
                   ),
                 );
-              },
-            ),
+              }
+              Navigator.pop(context);
+            },
+            child: Text('Save'),
           ),
-          // Add Service Button
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(
-              onPressed: () => _showServiceForm(context),
-              child: const Text('Tambah Layanan'),
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
           ),
         ],
       ),
     );
   }
 
-  void _showServiceForm(BuildContext context,
-      [int? index, Map<String, String>? service]) {
-    final TextEditingController nameController =
-        TextEditingController(text: service?['name'] ?? '');
-    final TextEditingController phoneController =
-        TextEditingController(text: service?['phone'] ?? '');
-    final TextEditingController deviceNameController =
-        TextEditingController(text: service?['deviceName'] ?? '');
-    final TextEditingController deviceDetailController =
-        TextEditingController(text: service?['deviceDetail'] ?? '');
-    final TextEditingController complaintController =
-        TextEditingController(text: service?['complaint'] ?? '');
+  void _showEditDialog(int serviceId, BuildContext context) {
+    final serviceProvider =
+        Provider.of<ServiceProvider>(context, listen: false);
+    final service =
+        serviceProvider.services.firstWhere((s) => s['id'] == serviceId);
+
+    final nameController = TextEditingController(text: service['name']);
+    final phoneController = TextEditingController(text: service['phone']);
+    final descriptionController =
+        TextEditingController(text: service['description']);
+    final deviceTypeController =
+        TextEditingController(text: service['device_type']);
+    final priceController = TextEditingController(
+        text: service['price'] == 0.0
+            ? ''
+            : (service['price'] as double).toInt().toString());
 
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(index == null ? 'Tambah Layanan' : 'Edit Layanan'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Nama'),
-                ),
-                TextField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Telepon'),
-                  keyboardType: TextInputType.phone,
-                ),
-                TextField(
-                  controller: deviceNameController,
-                  decoration:
-                      const InputDecoration(labelText: 'Nama Perangkat'),
-                ),
-                TextField(
-                  controller: deviceDetailController,
-                  decoration:
-                      const InputDecoration(labelText: 'Detail Perangkat'),
-                ),
-                TextField(
-                  controller: complaintController,
-                  decoration: const InputDecoration(labelText: 'Keluhan'),
-                ),
-              ],
-            ),
+      builder: (context) => AlertDialog(
+        title: Text('Edit Service'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: 'Nama Service'),
+              ),
+              TextField(
+                controller: phoneController,
+                decoration: InputDecoration(labelText: 'Phone'),
+                keyboardType: TextInputType.phone,
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(labelText: 'Keluhan'),
+              ),
+              TextField(
+                controller: deviceTypeController,
+                decoration: InputDecoration(labelText: 'Tipe Device'),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: InputDecoration(labelText: 'Harga'),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  CurrencyTextInputFormatter.currency(
+                    decimalDigits: 0,
+                    locale: 'id_ID',
+                    symbol: 'Rp',
+                  )
+                ],
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final String name = nameController.text.trim();
-                final String phone = phoneController.text.trim();
-                final String deviceName = deviceNameController.text.trim();
-                final String deviceDetail = deviceDetailController.text.trim();
-                final String complaint = complaintController.text.trim();
-
-                if (index == null) {
-                  _addService(name, phone, deviceName, deviceDetail, complaint);
-                } else {
-                  _editService(
-                      index, name, phone, deviceName, deviceDetail, complaint);
-                }
-
-                Navigator.pop(context);
-              },
-              child: const Text('Simpan'),
-            ),
-          ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              final code =
+                  '${deviceTypeController.text}${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().day}${DateTime.now().month}${DateTime.now().year}';
+              final updatedService = {
+                'id': serviceId,
+                'code': code,
+                'name': nameController.text,
+                'phone': phoneController.text,
+                'description': descriptionController.text,
+                'device_type': deviceTypeController.text,
+                'price': double.tryParse(priceController.text) ?? 0.0,
+              };
+              serviceProvider
+                  .updateService(serviceId, updatedService)
+                  .then((result) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(result.message),
+                ));
+              });
+              Navigator.pop(context);
+            },
+            child: Text('Save'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+        ],
+      ),
     );
+  }
+
+  void _showDeleteDialog(int serviceId, BuildContext context) {
+    final serviceProvider =
+        Provider.of<ServiceProvider>(context, listen: false);
+    // showDialog(
+    //   context: context,
+    //   builder: (context) => AlertDialog(
+    //     title: Text('Delete Service'),
+    //     content: Text('Are you sure you want to delete this service?'),
+    //     actions: [
+    //       TextButton(
+    //         onPressed: () {
+    //           Navigator.pop(context);
+    //         },
+    //         child: Text('Delete'),
+    //       ),
+    //       TextButton(
+    //         onPressed: () => Navigator.pop(context),
+    //         child: Text('Cancel'),
+    //       ),
+    //     ],
+    //   ),
+    // );
+    serviceProvider.deleteService(serviceId).then((result) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(result.message),
+      ));
+    });
   }
 }

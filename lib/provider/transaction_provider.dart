@@ -13,7 +13,7 @@ class TransactionProvider extends ChangeNotifier {
 
   // Pagination variables
   int _currentPage = 1;
-  final int _itemsPerPage = 10;
+  final int _itemsPerPage = 1000;
 
   List<Map<String, dynamic>> get transactions => _filteredTransactions;
   Map<String, dynamic>? get transactionDetails => _transactionDetails;
@@ -72,7 +72,6 @@ class TransactionProvider extends ChangeNotifier {
       notifyListeners();
 
       await _service.addTransaction(DateTime.now().toString(), total, products);
-      await fetchTransactions(); // Refresh data
       _isLoading = false;
       notifyListeners();
 

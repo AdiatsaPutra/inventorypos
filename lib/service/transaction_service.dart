@@ -31,13 +31,23 @@ class TransactionService {
           whereArgs: [transactionId],
         );
 
-        // Insert products into transaction_products table
+        // Insert products into transaction_products table and update inventory stock
         for (var product in products) {
+          final productId = product['id'];
+          final quantity = product['count'];
+
+          // Insert product into transaction_products table
           await txn.insert(_transactionProductsTable, {
             'transaction_id': transactionId,
-            'product_id': product['id'],
-            'quantity': product['count'],
+            'product_id': productId,
+            'quantity': quantity,
           });
+
+          // Update stock in the inventory table
+          await txn.rawUpdate(
+            'UPDATE inventory SET stock = stock - ? WHERE id = ?',
+            [quantity, productId],
+          );
         }
 
         return transactionId;

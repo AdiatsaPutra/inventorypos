@@ -118,7 +118,7 @@ class InventoryPage extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
               onPressed: () => _showProductForm(context, provider),
-              child: const Text('Add Product'),
+              child: const Text('Tambah Inventaris'),
             ),
           ),
         ],
@@ -136,8 +136,8 @@ class InventoryPage extends StatelessWidget {
         text: (product?['price'] as double?)?.toStringAsFixed(0) ?? '');
     final TextEditingController stockController =
         TextEditingController(text: product?['stock']?.toString() ?? '');
-
-    provider.clearSelectedImage();
+    provider.image = product?['image_path'];
+    print(provider.image);
 
     showDialog(
       context: context,
@@ -176,19 +176,30 @@ class InventoryPage extends StatelessWidget {
                 // Image Picker
                 Row(
                   children: [
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        await provider.pickImage();
-                      },
-                      icon: const Icon(Icons.image),
-                      label: const Text('Select Image'),
-                    ),
+                    provider.image == null
+                        ? ElevatedButton.icon(
+                            onPressed: () async {
+                              await provider.pickImage();
+                            },
+                            icon: const Icon(Icons.image),
+                            label: const Text('Select Image'),
+                          )
+                        : SizedBox(),
                     const SizedBox(width: 10),
                     Consumer<InventoryProvider>(
                       builder: (context, provider, _) {
+                        if (provider.image != null) {
+                          return Image.memory(
+                            base64Decode(product!['image_path']),
+                            width: 100,
+                            height: 100,
+                          );
+                        }
+
                         if (provider.selectedImage == null) {
                           return const SizedBox();
                         }
+
                         return Image.file(
                           provider.selectedImage!,
                           width: 50,

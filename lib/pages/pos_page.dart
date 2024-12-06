@@ -160,7 +160,12 @@ class ProductCard extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 Text('Harga: ${(price.toInt().toRupiah())}'), // Updated to IDR
-                Text('Stok: $stock'),
+                Text(
+                  'Stok: $stock',
+                  style: TextStyle(
+                    color: stock < 2 ? Colors.red : Colors.black,
+                  ),
+                ),
               ],
             ),
           ),
@@ -256,23 +261,48 @@ class CartSummary extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () async {
-                  final transactionProvider =
-                      Provider.of<TransactionProvider>(context, listen: false);
-                  final res = await transactionProvider.addTransaction(
-                    total: posProvider.selectedProducts.fold<double>(
-                      0,
-                      (sum, product) =>
-                          sum + (product['price'] * product['count']),
-                    ),
-                    products: posProvider.selectedProducts,
-                  );
-                  if (res == 'success') {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Checkout complete!')),
-                    );
-                  }
-                },
+                onPressed: posProvider.selectedProducts.isEmpty
+                    ? null
+                    : () async {
+                        final transactionProvider =
+                            Provider.of<TransactionProvider>(context,
+                                listen: false);
+                        final inventoryProvider =
+                            Provider.of<InventoryProvider>(context,
+                                listen: false);
+                        final res = await transactionProvider.addTransaction(
+                          total: posProvider.selectedProducts.fold<double>(
+                            0,
+                            (sum, product) =>
+                                sum + (product['price'] * product['count']),
+                          ),
+                          products: posProvider.selectedProducts,
+                        );
+                        if (res == 'success') {
+                          posProvider.clearCart();
+                          posProvider.initialize(context);
+                          transactionProvider.fetchTransactions();
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text('Berhasil Checkout'),
+                                actions: [
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text('Oke'),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
+                      },
                 child: Text('Checkout'),
               ),
             ),

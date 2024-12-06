@@ -7,7 +7,7 @@ class DatabaseHelper {
 
   DatabaseHelper._internal();
 
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 2;
 
   Database? _database;
 
@@ -76,6 +76,19 @@ class DatabaseHelper {
       )
     ''');
 
+    // Create Service Table
+    await db.execute('''
+      CREATE TABLE service (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL,
+      name TEXT NOT NULL,
+      device_type TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      description TEXT,
+      price REAL NOT NULL
+    )
+  ''');
+
     // Seed initial users for offline login
     await _seedUsers(db);
   }
@@ -87,7 +100,5 @@ class DatabaseHelper {
     });
   }
 
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Handle schema migrations here (e.g., add columns or modify tables)
-  }
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {}
 }

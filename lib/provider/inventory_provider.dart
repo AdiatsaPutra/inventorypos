@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:inventorypos/service/inventory_service.dart';
 
 class InventoryProvider extends ChangeNotifier {
@@ -11,6 +13,7 @@ class InventoryProvider extends ChangeNotifier {
   bool _isLoading = false;
   String _errorMessage = '';
   File? _selectedImage;
+  String? image;
 
   // Pagination variables
   int _currentPage = 1;
@@ -100,8 +103,9 @@ class InventoryProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      await _service.updateProduct(
-          id, name, type, price, stock, _selectedImage?.path ?? '');
+      File file = await base64ToFile(image!, name);
+
+      await _service.updateProduct(id, name, type, price, stock, file.path);
       await fetchProducts();
       _isLoading = false;
       notifyListeners();
@@ -178,6 +182,27 @@ class InventoryProvider extends ChangeNotifier {
     if (_currentPage > 1) {
       _currentPage--;
       notifyListeners();
+    }
+  }
+
+  Future<File> base64ToFile(String base64String, String fileName) async {
+    try {
+      // Decode the Base64 string into bytes
+      final bytes = base64Decode(base64String);
+
+      // Get the temporary directory of the app
+      final tempDir = await getTemporaryDirectory();
+
+      // Create a file path using the temporary directory and the file name
+      final filePath = '${tempDir.path}/$fileName';
+
+      // Write the bytes to a file
+      final file = File(filePath);
+      await file.writeAsBytes(bytes);
+
+      return file;
+    } catch (e) {
+      throw Exception('Failed to convert Base64 to file: $e');
     }
   }
 }

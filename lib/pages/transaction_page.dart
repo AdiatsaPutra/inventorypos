@@ -210,10 +210,10 @@ class TransactionPage extends StatelessWidget {
                           color: Colors.black,
                           borderRadius: BorderRadius.circular(10)),
                       columnWidths: {
-                        0: FixedColumnWidth(50), // Adjust for image size
-                        1: FixedColumnWidth(150), // Adjust based on text length
-                        2: FixedColumnWidth(
-                            100), // Adjust based on price length
+                        0: FixedColumnWidth(50),
+                        1: FixedColumnWidth(150),
+                        2: FixedColumnWidth(100),
+                        3: FixedColumnWidth(100),
                       },
                       children: [
                         // Table Header Row
@@ -231,6 +231,10 @@ class TransactionPage extends StatelessWidget {
                               padding: const EdgeInsets.all(8.0),
                               child: Text('Harga'),
                             ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text('Terjual'),
+                            ),
                           ],
                         ),
                         // Table Rows for each product
@@ -245,8 +249,8 @@ class TransactionPage extends StatelessWidget {
                                 child: Image.memory(
                                   base64Decode(
                                       transaction['products'][i]['image_path']),
-                                  width: 100,
-                                  height: 100,
+                                  width: 50,
+                                  height: 50,
                                 ),
                               ),
                               // Product Name
@@ -262,6 +266,13 @@ class TransactionPage extends StatelessWidget {
                                           as double)
                                       .toInt()
                                       .toRupiah(),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  transaction['products'][i]['quantity']
+                                      .toString(),
                                 ),
                               ),
                             ],

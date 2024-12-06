@@ -1,5 +1,6 @@
 import 'package:inventorypos/provider/inventory_provider.dart';
 import 'package:inventorypos/provider/pos_provider.dart';
+import 'package:inventorypos/provider/service_provider.dart';
 import 'package:inventorypos/provider/transaction_provider.dart';
 import 'package:inventorypos/state_util.dart';
 import 'package:inventorypos/core.dart';
@@ -45,6 +46,9 @@ class MyApp extends StatelessWidget {
           ),
           ChangeNotifierProvider(
             create: (_) => TransactionProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => ServiceProvider(),
           ),
         ],
         child: MaterialApp(
