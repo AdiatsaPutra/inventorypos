@@ -1,5 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:inventorypos/extension/number_extension.dart';
+import 'package:inventorypos/extension/string_extension.dart';
 import 'package:inventorypos/provider/transaction_provider.dart';
+import 'package:collection/collection.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -54,18 +59,36 @@ class TransactionPage extends StatelessWidget {
                               DataCell(Text(DateFormat('dd MMM yyyy', 'id')
                                   .format(DateTime.parse(
                                       transaction['date'] as String)))),
-                              DataCell(Text(transaction['total'].toString())),
+                              DataCell(Text((transaction['total'] as double)
+                                  .toInt()
+                                  .toRupiah())),
                               DataCell(
                                 Row(
                                   children: [
-                                    // IconButton(
-                                    //   icon: const Icon(Icons.edit,
-                                    //       color: Colors.blue),
-                                    //   onPressed: () {
-                                    //     _showTransactionForm(
-                                    //         context, provider, transaction);
-                                    //   },
-                                    // ),
+                                    IconButton(
+                                      icon: const Icon(Icons.info,
+                                          color: Colors.blue),
+                                      onPressed: () async {
+                                        final res = await provider
+                                            .fetchTransactionDetails(
+                                                transaction['id']);
+                                        if (res == 'success') {
+                                          _showTransactionDetailsDialog(
+                                              context,
+                                              provider.transactionDetails ??
+                                                  {});
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                res,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
                                     IconButton(
                                       icon: const Icon(Icons.delete,
                                           color: Colors.red),
@@ -131,67 +154,141 @@ class TransactionPage extends StatelessWidget {
     );
   }
 
-  void _showTransactionForm(BuildContext context, TransactionProvider provider,
-      [Map<String, dynamic>? transaction]) {
-    final TextEditingController productController =
-        TextEditingController(text: transaction?['product'] ?? '');
-    final TextEditingController quantityController =
-        TextEditingController(text: transaction?['quantity']?.toString() ?? '');
-    final TextEditingController dateController =
-        TextEditingController(text: transaction?['date'] ?? '');
-
+  void _showTransactionDetailsDialog(
+      BuildContext context, Map<String, dynamic> transaction) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(
-              transaction == null ? 'Add Transaction' : 'Edit Transaction'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: productController,
-                  decoration: const InputDecoration(labelText: 'Product'),
-                ),
-                TextField(
-                  controller: quantityController,
-                  decoration: const InputDecoration(labelText: 'Quantity'),
-                  keyboardType: TextInputType.number,
-                ),
-                TextField(
-                  controller: dateController,
-                  decoration: const InputDecoration(labelText: 'Date'),
-                ),
-              ],
+          title: const Text('Detail Transaksi'),
+          content: SizedBox(
+            width: 900,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Kode Transaksi: '),
+                      Text(transaction['transaction']['transaction_code']),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Tanggal: '),
+                      Text(transaction['transaction']['date']
+                          .toString()
+                          .toFormattedDate()),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Total: '),
+                      Text((transaction['transaction']['total'] as double)
+                          .toInt()
+                          .toRupiah()),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Produk Terjual',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  SizedBox(
+                    width: 900,
+                    child: Table(
+                      border: TableBorder.all(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(10)),
+                      columnWidths: {
+                        0: FixedColumnWidth(50), // Adjust for image size
+                        1: FixedColumnWidth(150), // Adjust based on text length
+                        2: FixedColumnWidth(
+                            100), // Adjust based on price length
+                      },
+                      children: [
+                        // Table Header Row
+                        TableRow(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text('Foto'),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text('Nama'),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text('Harga'),
+                            ),
+                          ],
+                        ),
+                        // Table Rows for each product
+                        ...(transaction['products']
+                                as List<Map<String, dynamic>>)
+                            .mapIndexed(
+                          (i, e) => TableRow(
+                            children: [
+                              // Product image (adjust size if needed)
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Image.memory(
+                                  base64Decode(
+                                      transaction['products'][i]['image_path']),
+                                  width: 100,
+                                  height: 100,
+                                ),
+                              ),
+                              // Product Name
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(transaction['products'][i]['name']),
+                              ),
+                              // Product Price
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  (transaction['products'][i]['price']
+                                          as double)
+                                      .toInt()
+                                      .toRupiah(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                  // const SizedBox(height: 8),
+                  // Text(
+                  //     'Date: ${DateFormat('dd MMM yyyy', 'id').format(DateTime.parse(transaction['date'] as String))}'),
+                  // const SizedBox(height: 8),
+                  // Text('Total: ${transaction['total']}'),
+                  // const SizedBox(height: 8),
+                  // Text('Products:'),
+                  // for (var product in transaction['products'])
+                  //   Text(
+                  //     '  - ${product['product']} (x${product['quantity']})',
+                  //   ),
+                ],
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (transaction == null) {
-                  await provider.addTransaction(
-                    total: 0, // Add logic for total calculation if required
-                    products: [
-                      {
-                        'product': productController.text,
-                        'quantity': quantityController.text
-                      }
-                    ],
-                  );
-                } else {
-                  await provider.updateTransaction(
-                    transaction['id'],
-                    dateController.text,
-                    0, // Add logic for total calculation if required
-                  );
-                }
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
+              child: const Text('Ok'),
             ),
           ],
         );

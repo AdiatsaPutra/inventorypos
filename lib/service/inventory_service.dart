@@ -1,40 +1,19 @@
 import 'dart:convert'; // For base64 encoding
 import 'dart:io'; // For file handling
 import 'dart:math';
+import 'package:inventorypos/constant/string_constant.dart';
+import 'package:inventorypos/database/db.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class InventoryService {
-  late Database _database;
-
-  Future<void> initDatabase() async {
-    sqfliteFfiInit();
-    _database = await databaseFactoryFfi.openDatabase(
-      'inventory.db',
-      options: OpenDatabaseOptions(
-        version: 2, // Increment the version to trigger the migration
-        onCreate: (db, version) async {
-          await db.execute('''
-          CREATE TABLE inventory (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            code TEXT,
-            name TEXT,
-            type TEXT,
-            price REAL,
-            stock INTEGER,
-            image_path TEXT
-          )
-        ''');
-        },
-      ),
-    );
-  }
-
   Future<List<Map<String, dynamic>>> getAllProducts() async {
-    return await _database.query('inventory');
+    final db = await DatabaseHelper.instance.database;
+    return await db.query('inventory');
   }
 
   Future<int> addProduct(String name, String type, double price, int stock,
       String? imagePath) async {
+    final db = await DatabaseHelper.instance.database;
     final String code = _generateProductCode(name);
     String? base64Image;
 
@@ -43,7 +22,7 @@ class InventoryService {
       base64Image = await _encodeImageToBase64(imagePath);
     }
 
-    return await _database.insert('inventory', {
+    return await db.insert('inventory', {
       'code': code,
       'name': name,
       'type': type,
@@ -55,6 +34,7 @@ class InventoryService {
 
   Future<int> updateProduct(int id, String name, String type, double price,
       int stock, String? imagePath) async {
+    final db = await DatabaseHelper.instance.database;
     String? base64Image;
 
     // Convert image to base64 if a path is provided
@@ -62,7 +42,7 @@ class InventoryService {
       base64Image = await _encodeImageToBase64(imagePath);
     }
 
-    return await _database.update(
+    return await db.update(
       'inventory',
       {
         'name': name,
@@ -77,8 +57,8 @@ class InventoryService {
   }
 
   Future<int> deleteProduct(int id) async {
-    return await _database
-        .delete('inventory', where: 'id = ?', whereArgs: [id]);
+    final db = await DatabaseHelper.instance.database;
+    return await db.delete('inventory', where: 'id = ?', whereArgs: [id]);
   }
 
   /// Generates a product code based on the product name.
@@ -92,6 +72,7 @@ class InventoryService {
 
   /// Encodes an image at the given path to base64 format.
   Future<String?> _encodeImageToBase64(String imagePath) async {
+    final db = await DatabaseHelper.instance.database;
     try {
       final file = File(imagePath);
       final bytes = await file.readAsBytes(); // Read the image as bytes

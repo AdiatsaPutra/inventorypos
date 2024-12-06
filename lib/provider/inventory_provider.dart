@@ -27,7 +27,6 @@ class InventoryProvider extends ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    await _service.initDatabase();
     await fetchProducts();
   }
 

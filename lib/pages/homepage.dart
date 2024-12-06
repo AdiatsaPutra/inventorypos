@@ -7,6 +7,7 @@ import 'package:inventorypos/pages/service_page.dart';
 import 'package:inventorypos/pages/transaction_page.dart';
 import 'package:inventorypos/provider/inventory_provider.dart';
 import 'package:inventorypos/provider/pos_provider.dart';
+import 'package:inventorypos/provider/transaction_provider.dart';
 import 'package:provider/provider.dart';
 
 class POSHomePage extends StatefulWidget {
@@ -136,7 +137,12 @@ class _POSHomePageState extends State<POSHomePage> {
             leading: const Icon(Icons.receipt, color: Colors.white),
             title:
                 const Text('Transaksi', style: TextStyle(color: Colors.white)),
-            onTap: () => _onTabSelected(2),
+            onTap: () {
+              final transactionProvider =
+                  Provider.of<TransactionProvider>(context);
+              transactionProvider.fetchTransactions();
+              _onTabSelected(2);
+            },
           ),
           ListTile(
             leading: const Icon(Icons.settings, color: Colors.white),

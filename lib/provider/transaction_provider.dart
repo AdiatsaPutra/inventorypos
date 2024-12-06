@@ -26,7 +26,6 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    await _service.initDb();
     await fetchTransactions();
   }
 
@@ -47,7 +46,7 @@ class TransactionProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchTransactionDetails(int transactionId) async {
+  Future<String> fetchTransactionDetails(int transactionId) async {
     try {
       _isLoading = true;
       notifyListeners();
@@ -55,10 +54,12 @@ class TransactionProvider extends ChangeNotifier {
       _transactionDetails = await _service.getTransactionById(transactionId);
       _isLoading = false;
       notifyListeners();
+      return 'success';
     } catch (e) {
       _isLoading = false;
       _errorMessage = e.toString();
       notifyListeners();
+      return _errorMessage;
     }
   }
 
