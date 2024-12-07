@@ -7,6 +7,10 @@ class ServiceProvider with ChangeNotifier {
 
   ServiceProvider() {
     fetchAllServicesFromDB();
+    // Add listener to update search when the text changes in the controller
+    _searchController.addListener(() {
+      onSearch();
+    });
   }
 
   bool _isLoading = false;
@@ -36,7 +40,7 @@ class ServiceProvider with ChangeNotifier {
     try {
       _allServices = List<Map<String, dynamic>>.from(
           await _serviceService.getAllServices());
-      _applyFilters();
+      _applyFilters(); // After fetching, apply any filters (e.g., search)
     } catch (e) {
       _allServices = [];
       _services = [];
@@ -50,7 +54,7 @@ class ServiceProvider with ChangeNotifier {
     List<Map<String, dynamic>> filteredServices =
         List<Map<String, dynamic>>.from(_allServices);
 
-    // Apply search filter
+    // Apply search filter from the local list (_allServices)
     if (_searchQuery.isNotEmpty) {
       filteredServices = filteredServices
           .where((service) => service.values.any((value) => value
@@ -63,25 +67,31 @@ class ServiceProvider with ChangeNotifier {
     // Apply pagination
     final startIndex = (_currentPage - 1) * _itemsPerPage;
     final endIndex = startIndex + _itemsPerPage;
+
+    // Check if filtering results are within bounds of the available list
     _services = List<Map<String, dynamic>>.from(filteredServices.sublist(
       startIndex,
       endIndex > filteredServices.length ? filteredServices.length : endIndex,
     ));
+
+    // Debugging output
+    print('Filtered services: ${filteredServices.length} services');
+    print('Displayed services: ${_services.length} services');
   }
 
   // Handle search action
-  void onSearch(String query) {
-    _searchQuery = query.trim();
-    _currentPage = 1; // Reset to first page
-    _applyFilters();
-    notifyListeners();
+  void onSearch() {
+    _searchQuery = _searchController.text.trim(); // Get query from controller
+    _currentPage = 1; // Reset to first page when search query changes
+    _applyFilters(); // Apply filters after setting the search query
+    notifyListeners(); // Notify listeners to update UI
   }
 
   // Handle pagination action
   void onPagination(int page) {
     _currentPage = page;
-    _applyFilters();
-    notifyListeners();
+    _applyFilters(); // Apply filters on page change
+    notifyListeners(); // Notify listeners to update UI
   }
 
   // Create a service

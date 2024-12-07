@@ -85,6 +85,7 @@ class DatabaseHelper {
       device_type TEXT NOT NULL,
       phone TEXT NOT NULL,
       description TEXT,
+      status INTEGER,
       price REAL NOT NULL
     )
   ''');

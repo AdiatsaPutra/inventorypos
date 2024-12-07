@@ -5,6 +5,7 @@ import 'package:inventorypos/pages/pos_overview_page.dart';
 import 'package:inventorypos/pages/pos_page.dart';
 import 'package:inventorypos/pages/service_page.dart';
 import 'package:inventorypos/pages/transaction_page.dart';
+import 'package:inventorypos/provider/dashboard_provider.dart';
 import 'package:inventorypos/provider/inventory_provider.dart';
 import 'package:inventorypos/provider/pos_provider.dart';
 import 'package:inventorypos/provider/transaction_provider.dart';
@@ -125,7 +126,15 @@ class _POSHomePageState extends State<POSHomePage> {
           ListTile(
             leading: const Icon(Icons.home, color: Colors.white),
             title: const Text('Beranda', style: TextStyle(color: Colors.white)),
-            onTap: () => _onTabSelected(0),
+            onTap: () {
+              final dashboardProvider =
+                  Provider.of<DashboardProvider>(context, listen: false);
+              dashboardProvider.fetchTotalOfAllTransactions();
+              dashboardProvider.fetchMostSoldProduct();
+              dashboardProvider.fetchTotalProductsSold();
+              dashboardProvider.fetchWeeklyProductsSold();
+              _onTabSelected(0);
+            },
           ),
           ListTile(
             leading: const Icon(Icons.inventory, color: Colors.white),
@@ -139,7 +148,7 @@ class _POSHomePageState extends State<POSHomePage> {
                 const Text('Transaksi', style: TextStyle(color: Colors.white)),
             onTap: () {
               final transactionProvider =
-                  Provider.of<TransactionProvider>(context);
+                  Provider.of<TransactionProvider>(context, listen: false);
               transactionProvider.fetchTransactions();
               _onTabSelected(2);
             },
@@ -199,6 +208,15 @@ class _POSHomePageState extends State<POSHomePage> {
             icon: Icons.home,
             label: 'Beranda',
             index: 0,
+            onTap: () {
+              final dashboardProvider =
+                  Provider.of<DashboardProvider>(context, listen: false);
+              dashboardProvider.fetchTotalOfAllTransactions();
+              dashboardProvider.fetchMostSoldProduct();
+              dashboardProvider.fetchTotalProductsSold();
+              dashboardProvider.fetchWeeklyProductsSold();
+              _onTabSelected(0);
+            },
           ),
           _buildNavItem(
             icon: Icons.inventory,
@@ -209,6 +227,12 @@ class _POSHomePageState extends State<POSHomePage> {
             icon: Icons.receipt,
             label: 'Transaksi',
             index: 2,
+            onTap: () {
+              final transactionProvider =
+                  Provider.of<TransactionProvider>(context, listen: false);
+              transactionProvider.fetchTransactions();
+              _onTabSelected(2);
+            },
           ),
           _buildNavItem(
             icon: Icons.settings,

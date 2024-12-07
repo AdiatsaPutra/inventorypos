@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:inventorypos/extension/number_extension.dart';
+import 'package:inventorypos/provider/dashboard_provider.dart';
 import 'package:inventorypos/provider/inventory_provider.dart';
 import 'package:inventorypos/provider/pos_provider.dart';
 import 'package:inventorypos/provider/transaction_provider.dart';
@@ -282,6 +283,13 @@ class CartSummary extends StatelessWidget {
                           posProvider.clearCart();
                           posProvider.initialize(context);
                           transactionProvider.fetchTransactions();
+                          final dashboardProvider =
+                              Provider.of<DashboardProvider>(context,
+                                  listen: false);
+                          dashboardProvider.fetchTotalOfAllTransactions();
+                          dashboardProvider.fetchMostSoldProduct();
+                          dashboardProvider.fetchTotalProductsSold();
+                          dashboardProvider.fetchWeeklyProductsSold();
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {

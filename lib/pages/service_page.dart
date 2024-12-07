@@ -42,7 +42,7 @@ class ServicePage extends StatelessWidget {
           suffixIcon: IconButton(
             icon: Icon(Icons.search),
             onPressed: () {
-              serviceProvider.onSearch(serviceProvider.searchController.text);
+              serviceProvider.onSearch();
             },
           ),
         ),
@@ -83,28 +83,6 @@ class ServicePage extends StatelessWidget {
     );
   }
 
-  Widget _buildServiceActions(int serviceId, BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: Icon(
-            Icons.edit,
-            color: Colors.yellow,
-          ),
-          onPressed: () => _showEditDialog(serviceId, context),
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.delete,
-            color: Colors.red,
-          ),
-          onPressed: () => _showDeleteDialog(serviceId, context),
-        ),
-      ],
-    );
-  }
-
   Widget _buildPagination(ServiceProvider serviceProvider) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -129,6 +107,88 @@ class ServicePage extends StatelessWidget {
     );
   }
 
+  Widget _buildServiceActions(int serviceId, BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(
+            Icons.info,
+            color: Colors.blue,
+          ),
+          onPressed: () => _showDetailDialog(serviceId, context),
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.edit,
+            color: Colors.yellow,
+          ),
+          onPressed: () => _showEditDialog(serviceId, context),
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.delete,
+            color: Colors.red,
+          ),
+          onPressed: () => _showDeleteDialog(serviceId, context),
+        ),
+      ],
+    );
+  }
+
+  void _showDetailDialog(int serviceId, BuildContext context) {
+    final serviceProvider =
+        Provider.of<ServiceProvider>(context, listen: false);
+    final service =
+        serviceProvider.services.firstWhere((s) => s['id'] == serviceId);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Detail Service'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow('Kode Service:', service['code'] ?? '-'),
+              _buildDetailRow('Nama Service:', service['name'] ?? '-'),
+              _buildDetailRow('No. HP:', service['phone'] ?? '-'),
+              _buildDetailRow('Keluhan:', service['description'] ?? '-'),
+              _buildDetailRow('Tipe Device:', service['device_type'] ?? '-'),
+              // _buildDetailRow('Harga:',
+              //     service['price'] != null ? 'Rp ${service['price']}' : '-'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(value, style: TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showCreateDialog(BuildContext context) {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
@@ -150,20 +210,20 @@ class ServicePage extends StatelessWidget {
               ),
               TextField(
                 controller: phoneController,
-                decoration: InputDecoration(labelText: 'No HP'),
+                decoration: InputDecoration(labelText: 'No HP (Opsional)'),
                 keyboardType: TextInputType.phone,
-              ),
-              TextField(
-                controller: descriptionController,
-                decoration: InputDecoration(labelText: 'Keluhan'),
               ),
               TextField(
                 controller: deviceTypeController,
                 decoration: InputDecoration(labelText: 'Tipe Device'),
               ),
               TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(labelText: 'Keluhan'),
+              ),
+              TextField(
                 controller: priceController,
-                decoration: InputDecoration(labelText: 'Harga'),
+                decoration: InputDecoration(labelText: 'Harga(Opsional)'),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   CurrencyTextInputFormatter.currency(
@@ -180,7 +240,7 @@ class ServicePage extends StatelessWidget {
           TextButton(
             onPressed: () async {
               final code =
-                  '${deviceTypeController.text}${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().day}${DateTime.now().month}${DateTime.now().year}';
+                  '${deviceTypeController.text.trim()}${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().day}${DateTime.now().month}${DateTime.now().year}';
               final service = {
                 'code': code,
                 'name': nameController.text,
@@ -218,6 +278,7 @@ class ServicePage extends StatelessWidget {
         Provider.of<ServiceProvider>(context, listen: false);
     final service =
         serviceProvider.services.firstWhere((s) => s['id'] == serviceId);
+    final code = service['code'];
 
     final nameController = TextEditingController(text: service['name']);
     final phoneController = TextEditingController(text: service['phone']);
@@ -244,20 +305,20 @@ class ServicePage extends StatelessWidget {
               ),
               TextField(
                 controller: phoneController,
-                decoration: InputDecoration(labelText: 'Phone'),
+                decoration: InputDecoration(labelText: 'No HP (Opsional)'),
                 keyboardType: TextInputType.phone,
-              ),
-              TextField(
-                controller: descriptionController,
-                decoration: InputDecoration(labelText: 'Keluhan'),
               ),
               TextField(
                 controller: deviceTypeController,
                 decoration: InputDecoration(labelText: 'Tipe Device'),
               ),
               TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(labelText: 'Keluhan'),
+              ),
+              TextField(
                 controller: priceController,
-                decoration: InputDecoration(labelText: 'Harga'),
+                decoration: InputDecoration(labelText: 'Harga (Opsional)'),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   CurrencyTextInputFormatter.currency(
@@ -273,8 +334,6 @@ class ServicePage extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
-              final code =
-                  '${deviceTypeController.text}${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().day}${DateTime.now().month}${DateTime.now().year}';
               final updatedService = {
                 'id': serviceId,
                 'code': code,

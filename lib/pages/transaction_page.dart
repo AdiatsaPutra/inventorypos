@@ -30,7 +30,7 @@ class TransactionPage extends StatelessWidget {
                     provider.filterTransactions(value);
                   },
                   decoration: InputDecoration(
-                    labelText: 'Search by Transaction ID or Product Name',
+                    labelText: 'Cari',
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -49,7 +49,7 @@ class TransactionPage extends StatelessWidget {
                             DataColumn(label: Text('Kode Transaksi')),
                             DataColumn(label: Text('Tanggal')),
                             DataColumn(label: Text('Total')),
-                            DataColumn(label: Text('Actions')),
+                            DataColumn(label: Text('Aksi')),
                           ],
                           rows:
                               provider.paginatedTransactions.map((transaction) {
@@ -101,7 +101,7 @@ class TransactionPage extends StatelessWidget {
                                               .showSnackBar(
                                             const SnackBar(
                                                 content: Text(
-                                                    'Transaction deleted successfully')),
+                                                    'Transaksi berhasil dihapus')),
                                           );
                                         }
                                       },

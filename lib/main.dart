@@ -1,3 +1,4 @@
+import 'package:inventorypos/provider/dashboard_provider.dart';
 import 'package:inventorypos/provider/inventory_provider.dart';
 import 'package:inventorypos/provider/pos_provider.dart';
 import 'package:inventorypos/provider/service_provider.dart';
@@ -37,6 +38,9 @@ class MyApp extends StatelessWidget {
         providers: [
           ChangeNotifierProvider(
             create: (_) => LoginProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => DashboardProvider(),
           ),
           ChangeNotifierProvider(
             create: (_) => InventoryProvider(),
