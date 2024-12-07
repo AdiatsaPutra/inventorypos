@@ -1,4 +1,5 @@
 import 'package:inventorypos/constant/string_constant.dart';
+import 'package:inventorypos/database/migration/migration.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseHelper {
@@ -24,10 +25,10 @@ class DatabaseHelper {
     return await databaseFactory.openDatabase(
       dbName,
       options: OpenDatabaseOptions(
-        version: _databaseVersion,
-        onCreate: _onCreate,
-        onUpgrade: _onUpgrade,
-      ),
+          version: _databaseVersion,
+          onCreate: _onCreate,
+          onUpgrade: _onUpgrade,
+          onConfigure: _onConfigure),
     );
   }
 
@@ -36,9 +37,9 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        transaction_code TEXT NOT NULL,
-        date TEXT NOT NULL,
-        total REAL NOT NULL
+        transaction_code TEXT,
+        date TEXT,
+        total REAL
       )
     ''');
 
@@ -46,9 +47,9 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE transaction_products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        transaction_id INTEGER NOT NULL,
-        product_id INTEGER NOT NULL,
-        quantity INTEGER NOT NULL,
+        transaction_id INTEGER,
+        product_id INTEGER,
+        quantity INTEGER,
         FOREIGN KEY (transaction_id) REFERENCES transactions (id) ON DELETE CASCADE,
         FOREIGN KEY (product_id) REFERENCES inventory (id) ON DELETE CASCADE
       )
@@ -58,8 +59,8 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY,
-        username TEXT NOT NULL,
-        password TEXT NOT NULL
+        username TEXT,
+        password TEXT
       )
     ''');
 
@@ -70,6 +71,7 @@ class DatabaseHelper {
         code TEXT,
         name TEXT,
         type TEXT,
+        initial_price REAL,
         price REAL,
         stock INTEGER,
         image_path TEXT
@@ -80,13 +82,13 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE service (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      code TEXT NOT NULL,
-      name TEXT NOT NULL,
-      device_type TEXT NOT NULL,
-      phone TEXT NOT NULL,
+      code TEXT,
+      name TEXT,
+      device_type TEXT,
+      phone TEXT,
       description TEXT,
       status INTEGER,
-      price REAL NOT NULL
+      price REAL
     )
   ''');
 
@@ -101,5 +103,16 @@ class DatabaseHelper {
     });
   }
 
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {}
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    final migrations = await loadMigrations();
+    for (final migration in migrations) {
+      if (migration.version > oldVersion && migration.version <= newVersion) {
+        await migration.script(db);
+      }
+    }
+  }
+
+  static Future _onConfigure(Database db) async {
+    await db.execute('PRAGMA foreign_keys = ON');
+  }
 }

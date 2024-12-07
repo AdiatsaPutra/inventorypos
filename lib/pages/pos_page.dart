@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:inventorypos/extension/number_extension.dart';
 import 'package:inventorypos/provider/dashboard_provider.dart';
@@ -245,14 +246,75 @@ class CartSummary extends StatelessWidget {
                     ),
                   ),
             Divider(),
+            posProvider.selectedProducts.isEmpty
+                ? SizedBox()
+                : Row(
+                    children: [
+                      Text(
+                        'Diskon: ',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: posProvider.discountController,
+                          decoration: InputDecoration(
+                            hintText: 'Diskon',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10),
+                              ),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            posProvider.refresh();
+                            if (value.isEmpty) {
+                              posProvider.discountController.text = '0';
+                            }
+                            if (int.parse(value
+                                    .replaceAll('Rp', '')
+                                    .replaceAll('.', '')) >=
+                                posProvider.selectedProducts
+                                    .fold<double>(
+                                      0,
+                                      (sum, product) =>
+                                          sum +
+                                          (product['price'] * product['count']),
+                                    )
+                                    .toInt()) {
+                              posProvider.discountController.text = posProvider
+                                  .selectedProducts
+                                  .fold<double>(
+                                    0,
+                                    (sum, product) =>
+                                        sum +
+                                        (product['price'] * product['count']),
+                                  )
+                                  .toInt()
+                                  .toRupiah();
+                            }
+                          },
+                          inputFormatters: [
+                            CurrencyTextInputFormatter.currency(
+                              decimalDigits: 0,
+                              locale: 'id_ID',
+                              symbol: 'Rp',
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Text(
-                'Total: ${posProvider.selectedProducts.fold<double>(
+                'Total: ${(posProvider.selectedProducts.fold<double>(
                       0,
                       (sum, product) =>
                           sum + (product['price'] * product['count']),
-                    ).toInt().toRupiah()}',
+                    ).toInt() - int.parse(posProvider.discountController.text.trim().replaceAll('Rp', '').replaceAll('.', ''))).toRupiah()}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -272,16 +334,26 @@ class CartSummary extends StatelessWidget {
                             Provider.of<InventoryProvider>(context,
                                 listen: false);
                         final res = await transactionProvider.addTransaction(
-                          total: posProvider.selectedProducts.fold<double>(
-                            0,
-                            (sum, product) =>
-                                sum + (product['price'] * product['count']),
-                          ),
+                          total: (posProvider.selectedProducts
+                                      .fold<double>(
+                                        0,
+                                        (sum, product) =>
+                                            sum +
+                                            (product['price'] *
+                                                product['count']),
+                                      )
+                                      .toInt() -
+                                  int.parse(posProvider.discountController.text
+                                      .trim()
+                                      .replaceAll('Rp', '')
+                                      .replaceAll('.', '')))
+                              .toDouble(),
                           products: posProvider.selectedProducts,
                         );
                         if (res == 'success') {
                           posProvider.clearCart();
                           posProvider.initialize(context);
+                          posProvider.discountController.text = 0.toRupiah();
                           transactionProvider.fetchTransactions();
                           final dashboardProvider =
                               Provider.of<DashboardProvider>(context,
@@ -309,9 +381,15 @@ class CartSummary extends StatelessWidget {
                               );
                             },
                           );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(res),
+                            ),
+                          );
                         }
                       },
-                child: Text('Checkout'),
+                child: Text('Beli'),
               ),
             ),
           ],

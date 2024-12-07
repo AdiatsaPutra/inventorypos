@@ -75,14 +75,14 @@ class InventoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> addProduct(
-      String name, String type, double price, int stock) async {
+  Future<String> addProduct(String name, String type, double price, int stock,
+      double initialPrice) async {
     try {
       _isLoading = true;
       notifyListeners();
 
       await _service.addProduct(
-          name, type, price, stock, _selectedImage?.path ?? '');
+          name, type, price, stock, _selectedImage?.path ?? '', initialPrice);
       await fetchProducts();
       _isLoading = false;
       notifyListeners();
@@ -97,15 +97,16 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<String> updateProduct(
-      int id, String name, String type, double price, int stock) async {
+  Future<String> updateProduct(int id, String name, String type, double price,
+      int stock, double initialPrice) async {
     try {
       _isLoading = true;
       notifyListeners();
 
       File file = await base64ToFile(image!, name);
 
-      await _service.updateProduct(id, name, type, price, stock, file.path);
+      await _service.updateProduct(
+          id, name, type, price, stock, file.path, initialPrice);
       await fetchProducts();
       _isLoading = false;
       notifyListeners();

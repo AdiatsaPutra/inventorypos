@@ -3,7 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:inventorypos/extension/number_extension.dart';
+import 'package:inventorypos/extension/string_extension.dart';
 import 'package:inventorypos/provider/inventory_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 class InventoryPage extends StatelessWidget {
@@ -15,13 +19,14 @@ class InventoryPage extends StatelessWidget {
 
     return Scaffold(
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Search Bar
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
               decoration: InputDecoration(
-                labelText: 'Search',
+                labelText: 'Cari Produk',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -30,11 +35,19 @@ class InventoryPage extends StatelessWidget {
               onChanged: provider.searchInventory,
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ElevatedButton.icon(
+              onPressed: () => exportToPdf(provider),
+              icon: const Icon(Icons.picture_as_pdf),
+              label: const Text('Ekspor ke PDF'),
+            ),
+          ),
           // DataTable or Loading Indicator
           provider.isLoading
               ? const Center(child: CircularProgressIndicator())
               : provider.filteredInventory.isEmpty
-                  ? const Center(child: Text('No products available'))
+                  ? const Center(child: Text('Produk tidak tersedia'))
                   : Expanded(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -43,12 +56,12 @@ class InventoryPage extends StatelessWidget {
                           child: DataTable(
                             columnSpacing: 20,
                             columns: const [
-                              DataColumn(label: Text('Name')),
-                              DataColumn(label: Text('Code')),
-                              DataColumn(label: Text('Type')),
-                              DataColumn(label: Text('Price')),
-                              DataColumn(label: Text('Stock')),
-                              DataColumn(label: Text('Actions')),
+                              DataColumn(label: Text('Nama')),
+                              DataColumn(label: Text('Kode')),
+                              DataColumn(label: Text('Tipe')),
+                              DataColumn(label: Text('Harga')),
+                              DataColumn(label: Text('Stok')),
+                              DataColumn(label: Text('Aksi')),
                             ],
                             rows: provider.paginatedInventory.map((product) {
                               return DataRow(cells: [
@@ -103,7 +116,8 @@ class InventoryPage extends StatelessWidget {
                       ? () => provider.previousPage()
                       : null,
                 ),
-                Text('Page ${provider.currentPage} of ${provider.totalPages}'),
+                Text(
+                    'Halaman ${provider.currentPage} dari ${provider.totalPages}'),
                 IconButton(
                   icon: const Icon(Icons.arrow_forward),
                   onPressed: provider.currentPage < provider.totalPages
@@ -114,11 +128,13 @@ class InventoryPage extends StatelessWidget {
             ),
           ),
           // Add Product Button
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(
-              onPressed: () => _showProductForm(context, provider),
-              child: const Text('Tambah Inventaris'),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: () => _showProductForm(context, provider),
+                child: const Text('Tambah Produk'),
+              ),
             ),
           ),
         ],
@@ -136,28 +152,29 @@ class InventoryPage extends StatelessWidget {
         text: (product?['price'] as double?)?.toStringAsFixed(0) ?? '');
     final TextEditingController stockController =
         TextEditingController(text: product?['stock']?.toString() ?? '');
+    final TextEditingController initialPriceController = TextEditingController(
+        text: (product?['initial_price'] as double?)?.toStringAsFixed(0) ?? '');
     provider.image = product?['image_path'];
-    print(provider.image);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(product == null ? 'Add Product' : 'Edit Product'),
+          title: Text(product == null ? 'Tambah Produk' : 'Edit Produk'),
           content: SingleChildScrollView(
             child: Column(
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Product Name'),
+                  decoration: const InputDecoration(labelText: 'Nama Produk'),
                 ),
                 TextField(
                   controller: typeController,
-                  decoration: const InputDecoration(labelText: 'Product Type'),
+                  decoration: const InputDecoration(labelText: 'Tipe Produk'),
                 ),
                 TextField(
                   controller: priceController,
-                  decoration: const InputDecoration(labelText: 'Price'),
+                  decoration: const InputDecoration(labelText: 'Harga'),
                   keyboardType: TextInputType.number,
                   inputFormatters: [
                     CurrencyTextInputFormatter.currency(
@@ -169,8 +186,20 @@ class InventoryPage extends StatelessWidget {
                 ),
                 TextField(
                   controller: stockController,
-                  decoration: const InputDecoration(labelText: 'Stock'),
+                  decoration: const InputDecoration(labelText: 'Stok'),
                   keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: initialPriceController,
+                  decoration: const InputDecoration(labelText: 'Harga Awal'),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    CurrencyTextInputFormatter.currency(
+                      decimalDigits: 0,
+                      locale: 'id_ID',
+                      symbol: 'Rp',
+                    )
+                  ],
                 ),
                 const SizedBox(height: 10),
                 // Image Picker
@@ -182,7 +211,7 @@ class InventoryPage extends StatelessWidget {
                               await provider.pickImage();
                             },
                             icon: const Icon(Icons.image),
-                            label: const Text('Select Image'),
+                            label: const Text('Pilih Gambar'),
                           )
                         : SizedBox(),
                     const SizedBox(width: 10),
@@ -216,7 +245,7 @@ class InventoryPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -229,17 +258,23 @@ class InventoryPage extends StatelessWidget {
                     0;
                 final int stock =
                     int.tryParse(stockController.text.trim()) ?? 0;
+                final double initialPrice = double.tryParse(
+                        initialPriceController.text
+                            .trim()
+                            .replaceAll('Rp', '')
+                            .replaceAll('.', '')) ??
+                    0;
 
                 if (product == null) {
-                  provider.addProduct(name, type, price, stock);
+                  provider.addProduct(name, type, price, stock, initialPrice);
                 } else {
                   provider.updateProduct(
-                      product['id'], name, type, price, stock);
+                      product['id'], name, type, price, stock, initialPrice);
                 }
 
                 Navigator.pop(context);
               },
-              child: const Text('Save'),
+              child: const Text('Simpan'),
             ),
           ],
         );
@@ -266,22 +301,78 @@ class InventoryPage extends StatelessWidget {
                   ),
                 const SizedBox(height: 10),
                 // Product Details
-                Text('Code: ${product['code']}'),
-                Text('Type: ${product['type']}'),
+                Text('Kode: ${product['code']}'),
+                Text('Tipe: ${product['type']}'),
                 Text(
-                    'Price: ${(product['price'] as double).toInt().toRupiah()}'),
-                Text('Stock: ${product['stock']}'),
+                    'Harga: ${(product['price'] as double).toInt().toRupiah()}'),
+                Text('Stok: ${product['stock']}'),
+                Text(
+                    'Harga Awal: ${(product['initial_price'] as double).toInt().toRupiah()}'),
               ],
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              child: const Text('Tutup'),
             ),
           ],
         );
       },
     );
+  }
+
+  void exportToPdf(InventoryProvider provider) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text('Inventaris ${DateTime.now().toString().toFormattedDate()}',
+                style: pw.TextStyle(fontSize: 24)),
+            pw.SizedBox(height: 20),
+            pw.Table(
+              border: pw.TableBorder.all(),
+              children: [
+                // Header row
+                pw.TableRow(
+                  children: [
+                    pw.Text(' Nama Produk',
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text(' Kode',
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text(' Tipe',
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text(' Harga',
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text(' Stok',
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  ],
+                ),
+                // Data rows
+                ...provider.filteredInventory.map(
+                  (product) => pw.TableRow(
+                    children: [
+                      pw.Text(' ${product['name']}'),
+                      pw.Text(' ${product['code']}'),
+                      pw.Text(' ${product['type']}'),
+                      pw.Text(
+                        ' ${(product['price'] as double).toInt().toRupiah()}',
+                      ),
+                      pw.Text(' ${product['stock']}'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Save and display the PDF
+    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
   }
 }

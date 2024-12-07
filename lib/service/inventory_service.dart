@@ -12,7 +12,7 @@ class InventoryService {
   }
 
   Future<int> addProduct(String name, String type, double price, int stock,
-      String? imagePath) async {
+      String? imagePath, double initialPrice) async {
     final db = await DatabaseHelper.instance.database;
     final String code = _generateProductCode(name);
     String? base64Image;
@@ -29,11 +29,12 @@ class InventoryService {
       'price': price,
       'stock': stock,
       'image_path': base64Image, // Save the base64 encoded image
+      'initial_price': initialPrice, // Save the initial price
     });
   }
 
   Future<int> updateProduct(int id, String name, String type, double price,
-      int stock, String? imagePath) async {
+      int stock, String? imagePath, double initialPrice) async {
     final db = await DatabaseHelper.instance.database;
     String? base64Image;
 
@@ -50,6 +51,7 @@ class InventoryService {
         'price': price,
         'stock': stock,
         'image_path': base64Image, // Update the base64 encoded image
+        'initial_price': initialPrice, // Update the initial price
       },
       where: 'id = ?',
       whereArgs: [id],

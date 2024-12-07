@@ -10,6 +10,7 @@ import 'package:inventorypos/provider/inventory_provider.dart';
 import 'package:inventorypos/provider/pos_provider.dart';
 import 'package:inventorypos/provider/transaction_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class POSHomePage extends StatefulWidget {
   const POSHomePage({super.key});
@@ -34,8 +35,8 @@ class _POSHomePageState extends State<POSHomePage> {
     'Beranda',
     'Inventaris',
     'Transaksi',
-    'Layanan',
-    'Point of Sale', // New title added here
+    'Service',
+    'Kasir', // New title added here
   ];
 
   void _onTabSelected(int index) {
@@ -74,14 +75,20 @@ class _POSHomePageState extends State<POSHomePage> {
                   ),
                 ), // Dynamic title
                 centerTitle: true,
-                backgroundColor: Theme.of(context).primaryColor,
-                leading: IconButton(
-                  icon: Icon(
-                    _isDrawerOpen ? Icons.close : Icons.menu,
-                    color: Colors.white,
-                  ),
-                  onPressed: _toggleDrawer,
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Image.asset('assets/logo/sasa.png'),
                 ),
+                actions: [
+                  IconButton(
+                    icon: Icon(
+                      _isDrawerOpen ? Icons.close : Icons.menu,
+                      color: Colors.white,
+                    ),
+                    onPressed: _toggleDrawer,
+                  ),
+                ],
+                backgroundColor: Theme.of(context).primaryColor,
               ),
               body: _pages[_currentIndex],
               bottomNavigationBar: _buildCustomBottomNavBar(),
@@ -173,13 +180,19 @@ class _POSHomePageState extends State<POSHomePage> {
                   const Icon(Icons.logout, color: Colors.white), // Icon for POS
               title:
                   const Text('Keluar', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LoginPage(),
-                  ),
+              onTap: () async {
+                final prefs = await SharedPreferences.getInstance();
+                prefs.clear();
+                Future.delayed(Duration(seconds: 2)).then(
+                  (value) {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginPage(),
+                      ),
+                    );
+                  },
                 );
               } // Navigate to POS tab
               ),

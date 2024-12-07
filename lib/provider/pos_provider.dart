@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inventorypos/extension/number_extension.dart';
 import 'package:inventorypos/provider/inventory_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +7,8 @@ class POSProvider with ChangeNotifier {
   List<Map<String, dynamic>> displayedProducts = [];
   List<Map<String, dynamic>> selectedProducts = [];
   TextEditingController searchController = TextEditingController();
+  TextEditingController discountController =
+      TextEditingController(text: 0.toRupiah());
 
   void initialize(BuildContext context) async {
     final inventoryProvider =
@@ -59,6 +62,10 @@ class POSProvider with ChangeNotifier {
 
   void clearCart() {
     selectedProducts.clear();
+    notifyListeners();
+  }
+
+  void refresh() {
     notifyListeners();
   }
 }
