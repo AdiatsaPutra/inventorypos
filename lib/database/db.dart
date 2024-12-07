@@ -35,52 +35,57 @@ class DatabaseHelper {
   Future<void> _onCreate(Database db, int version) async {
     // Create Transactions Table
     await db.execute('''
-      CREATE TABLE transactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        transaction_code TEXT,
-        date TEXT,
-        total REAL
-      )
-    ''');
+    CREATE TABLE transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      transaction_code TEXT,
+      date TEXT,
+      total REAL,
+      discount REAL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  ''');
 
     // Create Transaction-Products Table
     await db.execute('''
-      CREATE TABLE transaction_products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        transaction_id INTEGER,
-        product_id INTEGER,
-        quantity INTEGER,
-        FOREIGN KEY (transaction_id) REFERENCES transactions (id) ON DELETE CASCADE,
-        FOREIGN KEY (product_id) REFERENCES inventory (id) ON DELETE CASCADE
-      )
-    ''');
+    CREATE TABLE transaction_products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      transaction_id INTEGER,
+      product_id INTEGER,
+      quantity INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (transaction_id) REFERENCES transactions (id) ON DELETE CASCADE,
+      FOREIGN KEY (product_id) REFERENCES inventory (id) ON DELETE CASCADE
+    )
+  ''');
 
     // Create Users Table for Offline Login
     await db.execute('''
-      CREATE TABLE users (
-        id INTEGER PRIMARY KEY,
-        username TEXT,
-        password TEXT
-      )
-    ''');
+    CREATE TABLE users (
+      id INTEGER PRIMARY KEY,
+      username TEXT,
+      password TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  ''');
 
     // Create Inventory Table
     await db.execute('''
-      CREATE TABLE inventory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT,
-        name TEXT,
-        type TEXT,
-        initial_price REAL,
-        price REAL,
-        stock INTEGER,
-        image_path TEXT
-      )
-    ''');
+    CREATE TABLE inventory (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT,
+      name TEXT,
+      type TEXT,
+      initial_price REAL,
+      price REAL,
+      stock INTEGER,
+      image_path TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  ''');
 
     // Create Service Table
     await db.execute('''
-      CREATE TABLE service (
+    CREATE TABLE service (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT,
       name TEXT,
@@ -88,7 +93,8 @@ class DatabaseHelper {
       phone TEXT,
       description TEXT,
       status INTEGER,
-      price REAL
+      price REAL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   ''');
 

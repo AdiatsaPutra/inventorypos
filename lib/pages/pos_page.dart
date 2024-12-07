@@ -348,6 +348,12 @@ class CartSummary extends StatelessWidget {
                                       .replaceAll('Rp', '')
                                       .replaceAll('.', '')))
                               .toDouble(),
+                          discount: int.parse(posProvider
+                                  .discountController.text
+                                  .trim()
+                                  .replaceAll('Rp', '')
+                                  .replaceAll('.', ''))
+                              .toDouble(),
                           products: posProvider.selectedProducts,
                         );
                         if (res == 'success') {

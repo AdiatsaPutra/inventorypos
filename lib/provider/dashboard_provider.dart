@@ -57,7 +57,7 @@ class DashboardProvider with ChangeNotifier {
     _setLoading(true);
     try {
       _totalOfAllTransactions =
-          await _dashboardProvider.getTotalOfAllTransactions();
+          await _dashboardProvider.getTotalOfThisMonthTransactions();
       _setLoading(false);
       notifyListeners();
       return Result(

@@ -34,7 +34,7 @@ class POSOverviewPage extends StatelessWidget {
                             Expanded(
                               child: _buildStatisticCard(
                                 context,
-                                'Total Pendapatan',
+                                'Total Pendapatan Bulan Ini',
                                 provider.totalOfAllTransactions
                                         ?.toInt()
                                         .toRupiah() ??
@@ -67,7 +67,7 @@ class POSOverviewPage extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
-                                'Pendapatan Minggu Ini (${summary['start_of_week']} - ${summary['end_of_week']})',
+                                'Penjualan Minggu Ini (${summary['start_of_week']} - ${summary['end_of_week']})',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -78,7 +78,6 @@ class POSOverviewPage extends StatelessWidget {
 
                             SfCartesianChart(
                               primaryXAxis: CategoryAxis(),
-                              tooltipBehavior: TooltipBehavior(enable: true),
                               series: [
                                 ColumnSeries<dynamic, String>(
                                   dataSource:

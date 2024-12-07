@@ -13,15 +13,19 @@ class TransactionService {
   }
 
   // Add a new transaction
-  Future<String> addTransaction(
-      String date, double total, List<Map<String, dynamic>> products) async {
+  Future<String> addTransaction(String date, double total, double discount,
+      List<Map<String, dynamic>> products) async {
     try {
       print(products);
       final db = await DatabaseHelper.instance.database;
       return await db.transaction((txn) async {
         // Insert into transactions table
-        final transactionId = await txn.insert(_transactionsTable,
-            {'transaction_code': 'SASA-', 'date': date, 'total': total});
+        final transactionId = await txn.insert(_transactionsTable, {
+          'transaction_code': 'SASA-',
+          'date': date,
+          'total': total,
+          'discount': discount,
+        });
 
         // Generate and update transaction code
         final transactionCode = _generateTransactionCode(transactionId);
@@ -76,7 +80,8 @@ class TransactionService {
         'id',
         'transaction_code',
         'date',
-        'total'
+        'total',
+        'discount'
       ], // Include specific fields
       where: 'id = ?',
       whereArgs: [transactionId],

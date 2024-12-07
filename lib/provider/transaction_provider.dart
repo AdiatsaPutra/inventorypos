@@ -65,13 +65,15 @@ class TransactionProvider extends ChangeNotifier {
 
   Future<String> addTransaction({
     required double total,
+    required double discount,
     required List<Map<String, dynamic>> products,
   }) async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      await _service.addTransaction(DateTime.now().toString(), total, products);
+      await _service.addTransaction(
+          DateTime.now().toString(), total, discount, products);
       _isLoading = false;
       notifyListeners();
 

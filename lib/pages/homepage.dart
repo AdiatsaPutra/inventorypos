@@ -114,22 +114,14 @@ class _POSHomePageState extends State<POSHomePage> {
       width: 250,
       color: Theme.of(context).primaryColor,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 150,
-            color: Theme.of(context).primaryColor,
-            child: Center(
-              child: Text(
-                'Menu POS',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+          SizedBox(height: 16),
+          Image.asset(
+            'assets/logo/sasa.png',
+            width: 100,
+            height: 100,
           ),
+          SizedBox(height: 16),
           ListTile(
             leading: const Icon(Icons.home, color: Colors.white),
             title: const Text('Beranda', style: TextStyle(color: Colors.white)),
@@ -196,6 +188,15 @@ class _POSHomePageState extends State<POSHomePage> {
                 );
               } // Navigate to POS tab
               ),
+          SizedBox(height: 16),
+          Text(
+            'Created by Adiatsa Putra Santika, S.Kom.',
+            style: TextStyle(
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 16),
         ],
       ),
     );

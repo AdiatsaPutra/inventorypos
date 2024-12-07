@@ -19,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       loginProvider.checkAutoLogin().then((_) {
         // If user is logged in after auto-login, navigate to home page
-        if (loginProvider.usernameController.text.isNotEmpty) {
+        if (loginProvider.isLogin) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => POSHomePage()),

@@ -9,6 +9,7 @@ class LoginProvider extends ChangeNotifier {
   final TextEditingController passwordController = TextEditingController();
   bool isOnline = false;
   bool isLoading = false;
+  bool isLogin = false;
 
   final OfflineLoginService _offlineLoginService = OfflineLoginService();
   final OnlineLoginService _onlineLoginService = OnlineLoginService();
@@ -26,11 +27,13 @@ class LoginProvider extends ChangeNotifier {
 
   // Auto-login check based on saved credentials
   Future<void> checkAutoLogin() async {
+    isLogin = false;
     final prefs = await SharedPreferences.getInstance();
     String? savedUsername = prefs.getString('username');
     String? savedPassword = prefs.getString('password');
 
     if (savedUsername != null && savedPassword != null) {
+      isLogin = true;
       usernameController.text = savedUsername;
       passwordController.text = savedPassword;
       await login(null); // Perform login automatically

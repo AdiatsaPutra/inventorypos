@@ -7,13 +7,25 @@ class DashboardService {
   final String _transactionsTable = 'transactions';
   final String _transactionProductsTable = 'transaction_products';
 
-  // Get the total of all transactions
-  Future<double> getTotalOfAllTransactions() async {
+  Future<double> getTotalOfThisMonthTransactions() async {
     final db = await DatabaseHelper.instance.database;
+    print('THIS');
 
-    // Query to calculate the total sum
-    final result = await db
-        .rawQuery('SELECT SUM(total) as total_sum FROM $_transactionsTable');
+    // Get the first and last days of the current month
+    final now = DateTime.now();
+    final firstDayOfMonth = DateTime(now.year, now.month, 1).toIso8601String();
+    final lastDayOfMonth =
+        DateTime(now.year, now.month + 1, 0, 23, 59, 59).toIso8601String();
+
+    // Query to calculate the total sum for the current month
+    final result = await db.rawQuery(
+      '''
+    SELECT SUM(total) as total_sum 
+    FROM $_transactionsTable 
+    WHERE created_at BETWEEN ? AND ?
+    ''',
+      [firstDayOfMonth, lastDayOfMonth],
+    );
 
     // Extract the total sum from the result
     if (result.isNotEmpty && result.first['total_sum'] != null) {

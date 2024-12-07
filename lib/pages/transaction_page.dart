@@ -188,6 +188,16 @@ class TransactionPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Text('Discount: '),
+                      Text((transaction['transaction']['discount'] as double)
+                          .toInt()
+                          .toRupiah()),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
                       Text('Total: '),
                       Text((transaction['transaction']['total'] as double)
                           .toInt()
