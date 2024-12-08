@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:inventorypos/extension/number_extension.dart';
@@ -256,8 +257,8 @@ class TransactionPage extends StatelessWidget {
                               // Product image (adjust size if needed)
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: Image.memory(
-                                  base64Decode(
+                                child: Image.file(
+                                  File(
                                       transaction['products'][i]['image_path']),
                                   width: 50,
                                   height: 50,

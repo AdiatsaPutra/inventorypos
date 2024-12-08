@@ -142,8 +142,8 @@ class ProductCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
               child: imageUrl.isNotEmpty
-                  ? Image.memory(
-                      base64Decode(imageUrl),
+                  ? Image.file(
+                      File(imageUrl),
                     )
                   : Container(
                       color: Colors.grey[200],

@@ -17,7 +17,7 @@ class InventoryProvider extends ChangeNotifier {
 
   // Pagination variables
   int _currentPage = 1;
-  final int _itemsPerPage = 10;
+  final int _itemsPerPage = 1000;
 
   List<Map<String, dynamic>> get filteredInventory => _filteredInventory;
   bool get isLoading => _isLoading;
@@ -85,6 +85,7 @@ class InventoryProvider extends ChangeNotifier {
           name, type, price, stock, _selectedImage?.path ?? '', initialPrice);
       await fetchProducts();
       _isLoading = false;
+      clear();
       notifyListeners();
 
       return 'success';
@@ -109,6 +110,7 @@ class InventoryProvider extends ChangeNotifier {
           id, name, type, price, stock, file.path, initialPrice);
       await fetchProducts();
       _isLoading = false;
+      clear();
       notifyListeners();
 
       return 'success';
@@ -205,5 +207,10 @@ class InventoryProvider extends ChangeNotifier {
     } catch (e) {
       throw Exception('Failed to convert Base64 to file: $e');
     }
+  }
+
+  void clear() {
+    _selectedImage = null;
+    image = null;
   }
 }

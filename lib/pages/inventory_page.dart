@@ -218,8 +218,8 @@ class InventoryPage extends StatelessWidget {
                     Consumer<InventoryProvider>(
                       builder: (context, provider, _) {
                         if (provider.image != null) {
-                          return Image.memory(
-                            base64Decode(product!['image_path']),
+                          return Image.file(
+                            File(product!['image_path']),
                             width: 100,
                             height: 100,
                           );
@@ -248,7 +248,7 @@ class InventoryPage extends StatelessWidget {
               child: const Text('Batal'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final String name = nameController.text.trim();
                 final String type = typeController.text.trim();
                 final double price = double.tryParse(priceController.text
@@ -266,10 +266,29 @@ class InventoryPage extends StatelessWidget {
                     0;
 
                 if (product == null) {
-                  provider.addProduct(name, type, price, stock, initialPrice);
+                  final res = await provider.addProduct(
+                      name, type, price, stock, initialPrice);
+                  if (res == 'success') {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Berhasil',
+                        ),
+                      ),
+                    );
+                  }
                 } else {
-                  provider.updateProduct(
+                  final res = await provider.updateProduct(
                       product['id'], name, type, price, stock, initialPrice);
+                  if (res == 'success') {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Berhasil',
+                        ),
+                      ),
+                    );
+                  }
                 }
 
                 Navigator.pop(context);
@@ -294,8 +313,8 @@ class InventoryPage extends StatelessWidget {
               children: [
                 // Product Image
                 if (product['image_path'] != null)
-                  Image.memory(
-                    base64Decode(product['image_path']),
+                  Image.file(
+                    File(product['image_path']),
                     width: 400,
                     height: 400,
                   ),
