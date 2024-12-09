@@ -154,7 +154,7 @@ class _POSHomePageState extends State<POSHomePage> {
           ),
           ListTile(
             leading: const Icon(Icons.settings, color: Colors.white),
-            title: const Text('Layanan', style: TextStyle(color: Colors.white)),
+            title: const Text('Service', style: TextStyle(color: Colors.white)),
             onTap: () => _onTabSelected(3),
           ),
           ListTile(
@@ -250,7 +250,7 @@ class _POSHomePageState extends State<POSHomePage> {
           ),
           _buildNavItem(
             icon: Icons.settings,
-            label: 'Layanan',
+            label: 'Service',
             index: 3,
           ),
           _buildNavItem(

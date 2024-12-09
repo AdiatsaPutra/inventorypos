@@ -1,3 +1,4 @@
+import 'package:google_fonts/google_fonts.dart';
 import 'package:inventorypos/provider/dashboard_provider.dart';
 import 'package:inventorypos/provider/inventory_provider.dart';
 import 'package:inventorypos/provider/pos_provider.dart';
@@ -59,6 +60,7 @@ class MyApp extends StatelessWidget {
           title: 'Flutter Demo',
           navigatorKey: Get.navigatorKey,
           theme: ThemeData(
+            textTheme: GoogleFonts.interTextTheme(),
             colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF3651A4)),
             primaryColor: Color(0xFF3651A4),
             useMaterial3: true,

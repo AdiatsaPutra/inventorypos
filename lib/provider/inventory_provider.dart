@@ -17,7 +17,7 @@ class InventoryProvider extends ChangeNotifier {
 
   // Pagination variables
   int _currentPage = 1;
-  final int _itemsPerPage = 1000;
+  final int _itemsPerPage = 50;
 
   List<Map<String, dynamic>> get filteredInventory => _filteredInventory;
   bool get isLoading => _isLoading;

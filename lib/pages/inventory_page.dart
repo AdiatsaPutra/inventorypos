@@ -5,6 +5,7 @@ import 'package:currency_text_input_formatter/currency_text_input_formatter.dart
 import 'package:inventorypos/extension/number_extension.dart';
 import 'package:inventorypos/extension/string_extension.dart';
 import 'package:inventorypos/provider/inventory_provider.dart';
+import 'package:inventorypos/widgets/app_button.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -35,21 +36,30 @@ class InventoryPage extends StatelessWidget {
               onChanged: provider.searchInventory,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ElevatedButton.icon(
-              onPressed: () => exportToPdf(provider),
-              icon: const Icon(Icons.picture_as_pdf),
-              label: const Text('Ekspor ke PDF'),
-            ),
+          Row(
+            children: [
+              SizedBox(width: 16),
+              AppButton(
+                onPressed: () => _showProductForm(context, provider),
+                icon: Icons.add,
+                type: ButtonType.info,
+                title: 'Tambah Inventaris',
+              ),
+              SizedBox(width: 16),
+              AppButton(
+                onPressed: () => exportToPdf(provider),
+                icon: Icons.picture_as_pdf,
+                type: ButtonType.danger,
+                title: 'Ekspor ke PDF',
+              ),
+            ],
           ),
-          // DataTable or Loading Indicator
-          provider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : provider.filteredInventory.isEmpty
-                  ? const Center(child: Text('Produk tidak tersedia'))
-                  : Expanded(
-                      child: Padding(
+          Expanded(
+            child: provider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : provider.filteredInventory.isEmpty
+                    ? const Center(child: Text('Belum ada Produk'))
+                    : Padding(
                         padding: const EdgeInsets.all(16),
                         child: SizedBox(
                           width: double.infinity,
@@ -103,7 +113,7 @@ class InventoryPage extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
+          ),
           // Pagination Controls
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -125,16 +135,6 @@ class InventoryPage extends StatelessWidget {
                       : null,
                 ),
               ],
-            ),
-          ),
-          // Add Product Button
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () => _showProductForm(context, provider),
-                child: const Text('Tambah Produk'),
-              ),
             ),
           ),
         ],

@@ -35,19 +35,11 @@ class DashboardProvider with ChangeNotifier {
         {
           "transaction_id": 1,
           "date": "2024-12-04",
-          "total": 300.50,
-          "product_id": 101,
-          "product_name": "Product A",
-          "total_quantity": 10
+          "total": 0,
+          "product_id": 0,
+          "product_name": "",
+          "total_quantity": 0
         },
-        {
-          "transaction_id": 2,
-          "date": "2024-12-05",
-          "total": 934.06,
-          "product_id": 102,
-          "product_name": "Product B",
-          "total_quantity": 5
-        }
       ]
     }
   ];

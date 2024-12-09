@@ -1,6 +1,7 @@
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:inventorypos/provider/service_provider.dart';
+import 'package:inventorypos/widgets/app_button.dart';
 import 'package:provider/provider.dart';
 
 class ServicePage extends StatelessWidget {
@@ -10,21 +11,28 @@ class ServicePage extends StatelessWidget {
       body: Consumer<ServiceProvider>(
         builder: (context, serviceProvider, child) {
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSearchBar(serviceProvider),
-              if (serviceProvider.isLoading)
-                Center(child: CircularProgressIndicator())
-              else
-                _buildServiceTable(serviceProvider, context),
+              SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: AppButton(
+                  title: 'Tambah Service',
+                  onPressed: () {
+                    _showCreateDialog(context);
+                  },
+                ),
+              ),
+              Expanded(
+                child: serviceProvider.isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : _buildServiceTable(serviceProvider, context),
+              ),
               _buildPagination(serviceProvider),
             ],
           );
         },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: ElevatedButton(
-        onPressed: () => _showCreateDialog(context),
-        child: Text('Tambah Service'),
       ),
     );
   }
@@ -52,6 +60,9 @@ class ServicePage extends StatelessWidget {
 
   Widget _buildServiceTable(
       ServiceProvider serviceProvider, BuildContext context) {
+    if (serviceProvider.services.isEmpty) {
+      return Center(child: Text('Belum ada Service'));
+    }
     return SingleChildScrollView(
       child: SizedBox(
         width: double.infinity,
@@ -94,7 +105,7 @@ class ServicePage extends StatelessWidget {
                   serviceProvider.onPagination(serviceProvider.currentPage - 1)
               : null,
         ),
-        Text('Page ${serviceProvider.currentPage}'),
+        Text('Halaman ${serviceProvider.currentPage}'),
         IconButton(
           icon: Icon(Icons.arrow_forward),
           onPressed: serviceProvider.services.length ==

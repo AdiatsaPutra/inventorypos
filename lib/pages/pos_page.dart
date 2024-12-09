@@ -18,7 +18,9 @@ class POSPage extends StatelessWidget {
     final inventoryProvider = Provider.of<InventoryProvider>(context);
 
     if (posProvider.displayedProducts.isEmpty) {
-      posProvider.initialize(context);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        posProvider.initialize(context);
+      });
     }
 
     return Scaffold(
@@ -68,6 +70,10 @@ class POSPage extends StatelessWidget {
                           } else {
                             crossAxisCount = 3;
                             cardSize = 300;
+                          }
+
+                          if (posProvider.displayedProducts.isEmpty) {
+                            return Center(child: Text('Belum ada produk'));
                           }
 
                           return GridView.builder(

@@ -42,7 +42,7 @@ class TransactionPage extends StatelessWidget {
               // Transactions Table
               Expanded(
                 child: provider.paginatedTransactions.isEmpty
-                    ? const Center(child: Text('No transactions available'))
+                    ? const Center(child: Text('Belum Ada Transaksi'))
                     : SizedBox(
                         width: double.infinity,
                         child: DataTable(
