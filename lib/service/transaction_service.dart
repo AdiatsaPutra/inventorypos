@@ -16,7 +16,6 @@ class TransactionService {
   Future<String> addTransaction(String date, double total, double discount,
       List<Map<String, dynamic>> products) async {
     try {
-      print(products);
       final db = await DatabaseHelper.instance.database;
       return await db.transaction((txn) async {
         // Insert into transactions table
@@ -58,7 +57,6 @@ class TransactionService {
         return transactionId.toString();
       });
     } catch (e) {
-      print(e);
       return e.toString();
     }
   }

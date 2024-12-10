@@ -57,7 +57,6 @@ class InventoryProvider extends ChangeNotifier {
 
       if (result != null && result.files.single.path != null) {
         _selectedImage = File(result.files.single.path!);
-        print(_selectedImage);
         notifyListeners();
         return _selectedImage;
       } else {
@@ -92,7 +91,6 @@ class InventoryProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = e.toString();
-      print(_errorMessage);
       notifyListeners();
       return 'Failed to add product: $_errorMessage';
     }

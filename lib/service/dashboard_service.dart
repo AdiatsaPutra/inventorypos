@@ -9,7 +9,6 @@ class DashboardService {
 
   Future<double> getTotalOfThisMonthTransactions() async {
     final db = await DatabaseHelper.instance.database;
-    print('THIS');
 
     // Get the first and last days of the current month
     final now = DateTime.now();
@@ -49,7 +48,6 @@ class DashboardService {
     ORDER BY total_sold DESC
     LIMIT 1
   ''');
-      print(result);
 
       // Return the most sold product or null if no data
       if (result.isNotEmpty) {
@@ -80,7 +78,6 @@ class DashboardService {
       // Return 0 if no products sold
       return 0;
     } catch (e) {
-      print(e);
       return 0;
     }
   }

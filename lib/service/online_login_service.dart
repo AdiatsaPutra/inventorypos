@@ -11,7 +11,6 @@ class OnlineLoginService {
       );
       return response.user != null; // Successful login if no error
     } catch (e) {
-      print('Error during online login: $e');
       return false;
     }
   }

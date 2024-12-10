@@ -70,7 +70,6 @@ class DashboardProvider with ChangeNotifier {
       return Result(
           isSuccess: true, message: 'Fetched most sold product successfully.');
     } catch (e) {
-      print(e);
       _setLoading(false);
       return Result(
           isSuccess: false, message: 'Failed to fetch most sold product: $e');
@@ -87,7 +86,6 @@ class DashboardProvider with ChangeNotifier {
           isSuccess: true,
           message: 'Fetched total products sold successfully.');
     } catch (e) {
-      print(e);
       _setLoading(false);
       return Result(
           isSuccess: false, message: 'Failed to fetch total products sold: $e');
@@ -105,7 +103,6 @@ class DashboardProvider with ChangeNotifier {
           isSuccess: true,
           message: 'Fetched total products sold successfully.');
     } catch (e) {
-      print(e);
       _setLoading(false);
       return Result(
           isSuccess: false, message: 'Failed to fetch total products sold: $e');

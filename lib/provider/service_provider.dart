@@ -75,8 +75,6 @@ class ServiceProvider with ChangeNotifier {
     ));
 
     // Debugging output
-    print('Filtered services: ${filteredServices.length} services');
-    print('Displayed services: ${_services.length} services');
   }
 
   // Handle search action

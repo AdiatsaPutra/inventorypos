@@ -7,7 +7,6 @@ class ServiceService {
       final db = await DatabaseHelper.instance.database;
       return await db.insert('service', service);
     } catch (e) {
-      print(e);
       return 0;
     }
   }
@@ -19,7 +18,6 @@ class ServiceService {
 
       // Fetch all services
       final result = await db.query('service');
-      print(result);
 
       return result;
     } catch (e) {
